@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Packliste</title>
+<meta name="theme-color" content="#2f6f5e">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f5f3ee; --card:#ffffff; --text:#1f2a27; --muted:#6b7672; --line:#e3e0d8;
+  --accent:#2f6f5e; --accent-soft:#dcebe5; --danger:#b4443a; --done:#9aa5a1;
+  --radius:14px; --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){color-scheme:dark;
+    --bg:#141917; --card:#1d2421; --text:#e7ece9; --muted:#97a39e; --line:#2c3531;
+    --accent:#5fb39b; --accent-soft:#23382f; --danger:#e07a70; --done:#5d6864;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{color-scheme:dark;
+  --bg:#141917; --card:#1d2421; --text:#e7ece9; --muted:#97a39e; --line:#2c3531;
+  --accent:#5fb39b; --accent-soft:#23382f; --danger:#e07a70; --done:#5d6864; --shadow:none;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:5;background:var(--bg);
+  padding:calc(env(safe-area-inset-top) + 14px) 16px 10px;display:flex;align-items:center;gap:8px}
+header h1{font-size:1.35rem;margin:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iconbtn{border:0;background:transparent;width:42px;height:42px;border-radius:50%;
+  display:grid;place-items:center;cursor:pointer;flex:none}
+.iconbtn:active{background:var(--line)}
+.iconbtn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+main{padding:0 16px calc(100px + env(safe-area-inset-bottom));max-width:680px;margin:0 auto}
+.section-title{font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:18px 4px 8px}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;
+  margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:12px}
+.card .emoji{font-size:1.6rem;width:36px;text-align:center;flex:none}
+.card .body{flex:1;min-width:0}
+.card .title{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .sub{color:var(--muted);font-size:.85rem}
+.bar{height:6px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}
+.bar>div{height:100%;background:var(--accent);border-radius:3px;transition:width .25s}
+.empty{text-align:center;color:var(--muted);padding:40px 20px}
+.empty .big{font-size:2.6rem;margin-bottom:8px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+  display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:6}
+nav button{flex:1;border:0;background:none;padding:10px 0 8px;display:flex;flex-direction:column;
+  align-items:center;gap:2px;font-size:.75rem;color:var(--muted);cursor:pointer}
+nav button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav button.active{color:var(--accent);font-weight:600}
+.fab{position:fixed;right:20px;bottom:calc(76px + env(safe-area-inset-bottom));width:58px;height:58px;
+  border-radius:18px;border:0;background:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.2);
+  display:grid;place-items:center;cursor:pointer;z-index:7}
+.fab svg{width:28px;height:28px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round}
+/* Liste */
+.progress{background:var(--card);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);margin-bottom:6px}
+.progress .row{display:flex;justify-content:space-between;font-size:.9rem;color:var(--muted)}
+.progress .row b{color:var(--text)}
+.group{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:10px}
+.group h3{margin:0;padding:10px 16px;font-size:.85rem;color:var(--accent);background:var(--accent-soft);
+  display:flex;justify-content:space-between}
+.group h3 span{color:var(--muted);font-weight:500}
+.item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line);min-height:52px}
+.group h3 + .item{border-top:0}
+.check{width:26px;height:26px;border-radius:8px;border:2px solid var(--muted);flex:none;display:grid;place-items:center;cursor:pointer}
+.check svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.item.done .check{background:var(--accent);border-color:var(--accent)}
+.item.done .check svg{opacity:1}
+.item .txt{flex:1;cursor:pointer;word-break:break-word}
+.item.done .txt{color:var(--done);text-decoration:line-through}
+.item .qty{color:var(--muted);font-size:.85rem}
+.item .del{display:none}
+.editing .item .del{display:grid}
+.editing .check{display:none}
+.del{color:var(--danger)}
+.addbar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;z-index:6}
+.addbar input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px}
+.addbar select{max-width:34%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:0 8px}
+.addbar button{border:0;background:var(--accent);color:#fff;border-radius:12px;width:46px;flex:none;cursor:pointer;font-size:1.4rem}
+.toggle{display:flex;gap:8px;margin:10px 0 4px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:6px 12px;font-size:.85rem;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+/* Dialoge */
+dialog{border:0;border-radius:20px;background:var(--card);color:var(--text);padding:20px;width:min(92vw,440px);
+  max-height:88vh;overflow:auto}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h2{margin:0 0 14px;font-size:1.2rem}
+label.f{display:block;font-size:.8rem;color:var(--muted);margin:12px 0 4px}
+dialog input[type=text],dialog input[type=date],dialog select,dialog textarea{width:100%;border:1px solid var(--line);
+  background:var(--bg);border-radius:12px;padding:10px 12px}
+.tpl-pick{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.tpl-pick input{width:20px;height:20px;accent-color:var(--accent)}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.btn{border:0;border-radius:12px;padding:10px 16px;cursor:pointer;background:var(--line)}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.danger{background:transparent;color:var(--danger)}
+.menu button{display:flex;width:100%;align-items:center;gap:12px;border:0;background:none;padding:13px 6px;
+  text-align:left;cursor:pointer;border-radius:10px}
+.menu button:active{background:var(--line)}
+.menu button.red{color:var(--danger)}
+.emojis{display:flex;flex-wrap:wrap;gap:6px}
+.emojis button{font-size:1.4rem;width:44px;height:44px;border-radius:10px;border:2px solid transparent;background:var(--bg);cursor:pointer}
+.emojis button.on{border-color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;z-index:20;
+  opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.hint{color:var(--muted);font-size:.85rem;margin:6px 4px}
+.settings-row{background:var(--card);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;
+  box-shadow:var(--shadow);cursor:pointer;display:flex;gap:12px;align-items:center}
+.settings-row .sub{color:var(--muted);font-size:.85rem}
+.shared{display:inline-flex;align-items:center;gap:4px;font-size:.8rem;color:var(--accent);font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block}
+.dot.off{background:var(--muted)}
+.dot.err{background:var(--danger)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.btnrow .btn{flex:1}
+.memb{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line)}
+.memb b{flex:1;font-weight:600}
+.memb small{color:var(--muted)}
+.qr{display:flex;justify-content:center;margin:6px 0 12px}
+.qr svg{width:180px;height:180px;background:#fff;border-radius:12px;padding:6px}
+</style>
+</head>
+<body>
+<header id="hdr"></header>
+<main id="main"></main>
+<div id="bottom"></div>
+<input type="file" id="fileIn" accept=".json,application/json" hidden>
+<div class="toast" id="toast"></div>
+
+<dialog id="dlg"></dialog>
+
+<script>
+"use strict";
+/* ---------- Icons ---------- */
+const I = {
+  back:'<svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>',
+  more:'<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>',
+  plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  check:'<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>',
+  trash:'<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  edit:'<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>',
+  done:'<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>',
+  cal:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  tpl:'<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.4 0 4.1 1.5 4.5 4.5"/></svg>',
+  gear:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
+};
+const EMOJIS = ["🧳","☀️","🏖️","⛷️","❄️","👶","👵","🏕️","🚗","✈️","🚆","🏨","🎒","🏊","🥾","🎄","🎂","🏥","🐶","📦"];
+
+/* ---------- Daten ---------- */
+const KEY = "packliste.v1";
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const mk = (cat, list) => list.map(t => ({id:uid(), text:t, cat}));
+
+function familyTemplates(){
+  return [
+    {id:uid(), name:"Reisen mit Baby (über Nacht)", icon:"👶", items:[
+      ...mk("Kleidung",["Body","Andere Anziehsachen","Schuhe","Mütze","Schlafsack","Decke","Jacke","Spucktücher"]),
+      ...mk("Pflege & Gesundheit",["Zinksalbe","Windeln","Feuchttücher","Vitamin D","Fiebersenker","Nasensauger","Zahnbürste","Zahnpasta","Schnuller"]),
+      ...mk("Essen",["Lätzchen","Löffel","Milch","Haferflocken","Bananen","Essen"]),
+      ...mk("Ausstattung",["Kinderwagen","Regenschutz","Babyschalenadapter","Trage","Kumja","Babyfon","Wickelunterlage","Spielzeug","Leuchtkugel","Stillkissen","Nestchen","Kopfkissen"]),
+      ...mk("Für uns",["Wasserflasche","Kopfhörer","Portmonnaie","Aufladekabel","Buch","Pille"])
+    ]},
+    {id:uid(), name:"Im Sommer immer einpacken", icon:"☀️", items:[
+      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Aufladekabel","Mücken Blitzdings","Wasserflasche","Sonnencreme","Schwimmsachen"]),
+      ...mk("Kind",["Wasserflasche Kind","Sonnenhut Kind","Snacks","Windeln und co","Wechselzeug","Sonnencreme"])
+    ]},
+    {id:uid(), name:"Im Herbst einpacken", icon:"🍂", items:[
+      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Aufladekabel","Wasserflasche","Regenjacke","Regenschirm","Taschentücher"]),
+      ...mk("Kind",["Wasserflasche Kind","Mütze","Matschhose","Gummistiefel","Regenjacke Kind","Regenschutz Kinderwagen","Snacks","Windeln und co","Wechselzeug"])
+    ]},
+    {id:uid(), name:"Im Winter einpacken", icon:"❄️", items:[
+      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Aufladekabel","Wasserflasche","Mütze","Schal","Handschuhe","Lippenpflege","Thermoskanne mit Tee"]),
+      ...mk("Kind",["Wasserflasche Kind","Schneeanzug","Wintermütze","Handschuhe Kind","Winterschuhe","Fußsack / Decke","Wind- und Wettercreme","Snacks","Windeln und co","Wechselzeug"])
+    ]},
+    {id:uid(), name:"Ultimative Reiseliste", icon:"✈️", items:[
+      ...mk("Küchenutensilien",["Messer","Clips","Ziplock bags","Salz","Tupperdose","Geschirrhandtuch","Müllbeutel","Teller","Schälchen","Zewa","Spüli","Schwamm","Spülmaschinentabs"]),
+      ...mk("Badzeug",["2x Sonnencreme","Bite away","Autan","Allesseife","Ibuprofen","Taschentücher (mehrere Pack)","Nagelpfeile","Nagelschere","Zahnpasta","Zahnbürsten","Bürste","Schminke","Shampoo","Tampons","Haargummis","Deo","Gesichtswaschzeug","Gesichtscreme","Handcreme"]),
+      ...mk("Kleidung Mutter",["Sonnenshirt","Sonnenhut","Birkenstock","Kleider","Rock","Unterwäsche","Socken","BH","Bikini","Reisehandtuch","Wäschenetz","Jeans","Jogginghose","Tshirts","Pullover","Schlafsachen"]),
+      ...mk("Kleidung Vater",["NoSeaLife Hosen"]),
+      ...mk("Sonstiges",["Bauchtasche","Adapter","Kindl","Buch","Ladekabel","Stifte","Wasserflasche","Spiele (Cabo, Doppelkopf...)","3x Reisepass","Portmonnaie","Bargeld","Kreditkarten","Kamera","Sonnenbrillending Vater","Kopfhörer","Snacks"]),
+      ...mk("Kind – Kleidung",["Body","Sonnenhut","Sonnenshirt","Wintermütze","Schlafsack","Schlafanzug","Decke","Jacke","Schuhe","Hausschuhe","Anzug","Handschuhe","Regensachen","Socken","Hosen","Strumpfhosen","Tshirts","Kleider?","Handtuch"]),
+      ...mk("Kind – Badzeug",["Zinksalbe","Windeln","Feuchttücher (1 normales Pack und das Pack mit dem guten Verschluss)","Vitamin D Tabletten","Fiebersenker","Zahnbürste","Zahnpasta","Schnuller","Fieberthermometer","2-3x Sonnencreme","Schwimmwindeln","Wickelunterlagen"]),
+      ...mk("Kind – Küchenzeug",["Lätzchen","Löffel","Abendessen","Haferflocken","Mittagsgläschen","Tüten Snacks","Wasserflasche","Nuk Becher","Tücher zum Saubermachen"]),
+      ...mk("Kind – Spielzeug",["Bücher","Puppe","Stapelbecher"]),
+      ...mk("Kind – Sonstiges",["Leuchtkugel","Sonnenschutz Buggy","Kindersitz für Stuhl","Buggy","Trage","Babyfon"]),
+      ...mk("Scotty",["Futter","Näpfe","Reisepass","Leinen","Leuchthalsband","Kacktüten","Ball","Körbchen","Kühlmatte","Wintermantel"])
+    ]}
+  ];
+}
+// Frühere Beispielvorlagen – werden beim Update durch die eigenen ersetzt, sofern unverändert
+const OLD_EXAMPLES = {
+  "Urlaub Sommer": "T-Shirts|Kurze Hosen|Lange Hose|Unterwäsche|Socken|Pullover / Jacke|Badesachen|Schlafsachen|Sandalen|Sonnenhut|Zahnbürste & Zahnpasta|Duschgel & Shampoo|Deo|Sonnencreme|After-Sun|Mückenschutz|Reiseapotheke|Handy & Ladekabel|Powerbank|Kopfhörer|Personalausweis / Reisepass|Krankenversicherungskarte|Buchungsbestätigungen|Bargeld & Karten|Sonnenbrille|Strandtuch|Trinkflasche|Snacks für die Fahrt",
+  "Übernachtung mit Baby": "Reisebett|Schlafsack|Kuscheltier|Schnuller (+ Ersatz)|Nachtlicht|Babyphone|Fläschchen|Milchpulver|Brei / Gläschen|Lätzchen|Löffel|Wasserkocher / Thermoskanne|Windeln|Feuchttücher|Wundcreme|Wickelunterlage|Windelbeutel|Bodys|Strampler / Hosen|Pullis|Socken|Mütze|Wechselkleidung|Kinderwagen / Trage|Spielzeug|Fieberthermometer|Fiebersaft / Zäpfchen|Spucktücher"
+};
+const RENAME = {"Kleidung Hannah":"Kleidung Mutter","Kleidung Lukas":"Kleidung Vater","Sonnenbrillending Lukas":"Sonnenbrillending Vater"};
+function renamePeople(t){
+  if(RENAME[t]) return RENAME[t];
+  return t.replace(/^Tessa(?= – |$)/,"Kind").replace(/ Tessa$/," Kind");
+}
+function upgradeTemplates(){
+  const v = db.tplVersion||1;
+  if(v >= 3) return;
+  if(v >= 2){
+    // Version 3: Namen → Mutter / Vater / Kind, neue Herbst- und Winter-Vorlage
+    db.events.concat(db.templates).forEach(o=>o.items.forEach(i=>{ i.cat=renamePeople(i.cat||"Sonstiges"); i.text=renamePeople(i.text); }));
+    const have = new Set(db.templates.map(t=>t.name));
+    const add = familyTemplates().filter(t=>["Im Herbst einpacken","Im Winter einpacken"].includes(t.name) && !have.has(t.name));
+    const at = db.templates.findIndex(t=>t.name==="Im Sommer immer einpacken");
+    db.templates.splice(at<0?db.templates.length:at+1, 0, ...add);
+    db.tplVersion = 3; return;
+  }
+  db.templates = db.templates.filter(t => t.share || OLD_EXAMPLES[t.name] !== t.items.map(i=>i.text).join("|"));
+  const have = new Set(db.templates.map(t=>t.name));
+  db.templates.unshift(...familyTemplates().filter(t=>!have.has(t.name)));
+  db.events.concat(db.templates).forEach(o=>o.items.forEach(i=>{ i.cat=renamePeople(i.cat||"Sonstiges"); i.text=renamePeople(i.text); }));
+  db.tplVersion = 3;
+}
+function defaultData(){
+  return {
+    templates:[
+      ...familyTemplates(),
+      {id:uid(), name:"Urlaub Winter", icon:"❄️", items:[
+        ...mk("Kleidung",["Winterjacke","Skihose","Thermounterwäsche","Pullover","Warme Socken","Mütze","Schal","Handschuhe","Winterschuhe","Hausschuhe","Schlafsachen"]),
+        ...mk("Hygiene",["Zahnbürste & Zahnpasta","Duschgel & Shampoo","Deo","Lippenpflege","Sonnencreme (hoher LSF)","Reiseapotheke"]),
+        ...mk("Technik",["Handy & Ladekabel","Powerbank"]),
+        ...mk("Dokumente",["Personalausweis","Krankenversicherungskarte","Skipass / Buchung","Bargeld & Karten"]),
+        ...mk("Sonstiges",["Sonnenbrille / Skibrille","Thermoskanne","Schneeketten / Eiskratzer"])
+      ]},
+      {id:uid(), name:"Besuch bei den Großeltern", icon:"👵", items:[
+        ...mk("Kleidung",["Wechselkleidung","Schlafsachen","Hausschuhe"]),
+        ...mk("Hygiene",["Zahnbürste & Zahnpasta","Waschzeug"]),
+        ...mk("Kinder",["Lieblingsspielzeug","Bücher","Kuscheltier"]),
+        ...mk("Sonstiges",["Handy & Ladekabel","Mitbringsel","Fotos für Oma & Opa"])
+      ]}
+    ],
+    events:[],
+    tplVersion:3
+  };
+}
+let db;
+function load(){
+  try{ db = JSON.parse(localStorage.getItem(KEY)); }catch(e){ db = null; }
+  if(!db || !Array.isArray(db.templates)) db = defaultData();
+  db.events ||= [];
+  db.settings ||= {hideDone:false};
+  upgradeTemplates(); saveLocal();
+}
+function saveLocal(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){ toast("Speichern fehlgeschlagen"); } }
+function save(){ saveLocal(); db.events.concat(db.templates).forEach(o=>{ if(o.share) syncTouched(o); }); }
+
+/* ---------- Helfer ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today = () => new Date().toISOString().slice(0,10);
+function fmtDate(d){
+  if(!d) return "";
+  const dt = new Date(d+"T12:00:00");
+  return dt.toLocaleDateString("de-DE",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
+}
+function daysUntil(d){
+  if(!d) return null;
+  const a = new Date(today()+"T12:00:00"), b = new Date(d+"T12:00:00");
+  return Math.round((b-a)/86400000);
+}
+function relDays(d){
+  const n = daysUntil(d);
+  if(n===null) return "";
+  if(n===0) return "heute"; if(n===1) return "morgen"; if(n===-1) return "gestern";
+  return n>0 ? `in ${n} Tagen` : `vor ${-n} Tagen`;
+}
+let toastT;
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2200); }
+function cats(items){ const s=[]; items.forEach(i=>{ const c=i.cat||"Sonstiges"; if(!s.includes(c)) s.push(c); }); return s; }
+function allCats(){
+  const s = new Set(["Kleidung","Hygiene","Technik","Dokumente","Sonstiges"]);
+  db.templates.forEach(t=>t.items.forEach(i=>s.add(i.cat||"Sonstiges")));
+  db.events.forEach(e=>e.items.forEach(i=>s.add(i.cat||"Sonstiges")));
+  return [...s];
+}
+
+/* ---------- Navigation ---------- */
+let view = {name:"events"};
+let editing = false;
+function go(v){ view = v; editing = false; render(); window.scrollTo(0,0);
+  if(v.name==="event"||v.name==="template") history.pushState({d:1},""); }
+window.addEventListener("popstate", ()=>{ if(view.name==="event") go({name:"events"}); else if(view.name==="template") go({name:"templates"}); });
+function back(){ if(history.state && history.state.d) history.back(); else go({name: view.name==="event"?"events":"templates"}); }
+
+/* ---------- Rendern ---------- */
+function render(){
+  const hdr=$("#hdr"), main=$("#main"), bottom=$("#bottom");
+  const ni=$("#newItem"), keep = ni ? {id:view.id, v:ni.value, f:document.activeElement===ni} : null;
+  renderView(hdr,main,bottom);
+  const ni2=$("#newItem");
+  if(keep && ni2 && keep.id===view.id){ ni2.value=keep.v; if(keep.f) ni2.focus(); }
+}
+function renderView(hdr,main,bottom){
+  if(view.name==="events") renderEvents(hdr,main,bottom);
+  else if(view.name==="templates") renderTemplates(hdr,main,bottom);
+  else if(view.name==="settings") renderSettings(hdr,main,bottom);
+  else if(view.name==="event") renderList(hdr,main,bottom,"event");
+  else if(view.name==="template") renderList(hdr,main,bottom,"template");
+}
+function navBar(active){
+  return `<nav>
+    <button class="${active==="events"?"active":""}" onclick="go({name:'events'})">${I.cal}Ereignisse</button>
+    <button class="${active==="templates"?"active":""}" onclick="go({name:'templates'})">${I.tpl}Vorlagen</button>
+    <button class="${active==="settings"?"active":""}" onclick="go({name:'settings'})">${I.gear}Einstellungen</button>
+  </nav>`;
+}
+function progressOf(e){ const n=e.items.length, d=e.items.filter(i=>i.done).length; return {n,d,p:n?Math.round(d/n*100):0}; }
+
+function renderEvents(hdr,main,bottom){
+  hdr.innerHTML = `<h1>Packliste</h1><button class="iconbtn" onclick="joinDialog()" aria-label="Gemeinsamer Liste beitreten" title="Gemeinsamer Liste beitreten">${I.people}</button>`;
+  const t = today();
+  const sorted = [...db.events].sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
+  const upcoming = sorted.filter(e=>!e.date || e.date>=t);
+  const past = sorted.filter(e=>e.date && e.date<t).reverse();
+  const card = e => { const p=progressOf(e); return `
+    <div class="card" onclick="go({name:'event',id:'${e.id}'})">
+      <div class="emoji">${esc(e.icon||"🧳")}</div>
+      <div class="body">
+        <div class="title">${esc(e.name)}</div>
+        <div class="sub">${e.share?"👥 ":""}${e.date?esc(fmtDate(e.date))+" · "+relDays(e.date):"ohne Datum"} · ${p.d}/${p.n} gepackt</div>
+        <div class="bar"><div style="width:${p.p}%"></div></div>
+      </div></div>`; };
+  if(!db.events.length){
+    main.innerHTML = `<div class="empty"><div class="big">🧳</div>Noch keine Ereignisse.<br>Tippe auf <b>+</b>, um eine Packliste für ein Ereignis anzulegen.</div>`;
+  } else {
+    main.innerHTML = (upcoming.length?`<div class="section-title">Anstehend</div>`+upcoming.map(card).join(""):"")
+      + (past.length?`<div class="section-title">Vergangen</div>`+past.map(card).join(""):"");
+  }
+  bottom.innerHTML = `<button class="fab" onclick="newEventDialog()" aria-label="Neues Ereignis">${I.plus}</button>` + navBar("events");
+}
+
+function renderTemplates(hdr,main,bottom){
+  hdr.innerHTML = `<h1>Vorlagen</h1><button class="iconbtn" onclick="joinDialog()" aria-label="Gemeinsamer Liste beitreten" title="Gemeinsamer Liste beitreten">${I.people}</button>`;
+  main.innerHTML = `<p class="hint">Allgemeine Listen, aus denen du Packlisten für Ereignisse erstellst.</p>` +
+    (db.templates.length ? [...db.templates].sort((a,b)=>a.name.localeCompare(b.name,"de")).map(t=>`
+    <div class="card" onclick="go({name:'template',id:'${t.id}'})">
+      <div class="emoji">${esc(t.icon||"📦")}</div>
+      <div class="body"><div class="title">${esc(t.name)}</div>
+      <div class="sub">${t.share?"👥 gemeinsam · ":""}${t.items.length} Einträge · ${cats(t.items).length} Kategorien</div></div>
+    </div>`).join("") : `<div class="empty"><div class="big">📋</div>Noch keine Vorlagen.</div>`);
+  bottom.innerHTML = `<button class="fab" onclick="newTemplateDialog()" aria-label="Neue Vorlage">${I.plus}</button>` + navBar("templates");
+}
+
+function renderSettings(hdr,main,bottom){
+  hdr.innerHTML = `<h1>Einstellungen</h1>`;
+  main.innerHTML = `
+    <div class="section-title">Daten</div>
+    <div class="settings-row" onclick="exportAll()"><div class="body"><b>Sicherung exportieren</b><div class="sub">Alle Vorlagen und Ereignisse als Datei speichern oder teilen</div></div></div>
+    <div class="settings-row" onclick="pickImport()"><div class="body"><b>Datei importieren</b><div class="sub">Sicherung oder geteilte Liste laden (wird hinzugefügt)</div></div></div>
+    <div class="settings-row" onclick="restoreDefaults()"><div class="body"><b>Beispielvorlagen wiederherstellen</b><div class="sub">Fügt die mitgelieferten Vorlagen erneut hinzu</div></div></div>
+    <div class="section-title">Gemeinsam bearbeiten</div>
+    <div class="settings-row" onclick="ask('Dein Name', myName(), 'z. B. Anna', n=>{ lsSet('myName', n.slice(0,30)); render(); })"><div class="body"><b>Dein Name</b><div class="sub">${myName()?esc(myName()):"Noch nicht festgelegt – sehen die anderen bei gemeinsamen Listen"}</div></div></div>
+    <div class="settings-row" onclick="joinDialog()"><div class="body"><b>Gemeinsamer Liste beitreten</b><div class="sub">Einladungslink einfügen</div></div></div>
+    <div class="settings-row" onclick="serverDialog()"><div class="body"><b>Server</b><div class="sub">${esc(syncServer())}</div></div></div>
+    <div class="section-title">Info</div>
+    <p class="hint">Deine Listen bleiben auf diesem Gerät. Gemeinsame Listen werden verschlüsselt über ntfy.sh abgeglichen – der Schlüssel steckt nur im Einladungslink.</p>`;
+  bottom.innerHTML = navBar("settings");
+}
+
+function getObj(kind){ return (kind==="event"?db.events:db.templates).find(x=>x.id===view.id); }
+
+function renderList(hdr,main,bottom,kind){
+  const o = getObj(kind);
+  if(!o){ go({name: kind==="event"?"events":"templates"}); return; }
+  const isEv = kind==="event";
+  hdr.innerHTML = `<button class="iconbtn" onclick="back()" aria-label="Zurück">${I.back}</button>
+    <h1>${esc(o.icon||"")} ${esc(o.name)}</h1>
+    <button class="iconbtn" onclick="toggleEdit()" aria-label="Bearbeiten">${editing?I.done:I.edit}</button>
+    <button class="iconbtn" onclick="listMenu('${kind}')" aria-label="Menü">${I.more}</button>`;
+  let html = "";
+  if(isEv){
+    const p = progressOf(o);
+    html += `<div class="progress"><div class="row"><span>${o.date?esc(fmtDate(o.date))+" · "+relDays(o.date):"ohne Datum"}</span><b>${p.d} / ${p.n}</b></div>
+      <div class="bar"><div style="width:${p.p}%"></div></div>${sharedLine(o)}</div>
+      <div class="toggle"><span class="chip ${db.settings.hideDone?"on":""}" onclick="toggleHide()">Erledigte ausblenden</span></div>`;
+  } else {
+    html += `${o.share?`<div class="progress">${sharedLine(o)}</div>`:""}<p class="hint">Änderungen hier wirken nur auf künftige Ereignisse.</p>
+      <div class="toggle"><span class="chip on" onclick="newEventDialog('${o.id}')">＋ Ereignis aus dieser Vorlage</span></div>`;
+  }
+  if(editing) html += `<p class="hint">Bearbeitungsmodus: Eintrag antippen zum Ändern, 🗑 zum Löschen.</p>`;
+  const list = cats(o.items);
+  let shown = 0;
+  list.forEach(c=>{
+    let items = o.items.filter(i=>(i.cat||"Sonstiges")===c);
+    const total = items.length, doneN = items.filter(i=>i.done).length;
+    if(isEv && db.settings.hideDone && !editing) items = items.filter(i=>!i.done);
+    if(!items.length) return;
+    shown += items.length;
+    if(isEv) items = [...items.filter(i=>!i.done), ...items.filter(i=>i.done)];
+    html += `<div class="group ${editing?"editing":""}"><h3>${esc(c)}${isEv?`<span>${doneN}/${total}</span>`:`<span>${total}</span>`}</h3>` +
+      items.map(i=>`<div class="item ${isEv&&i.done?"done":""}">
+        ${isEv?`<div class="check" onclick="toggleItem('${i.id}')">${I.check}</div>`:""}
+        <div class="txt" onclick="${editing||!isEv?`editItem('${kind}','${i.id}')`:`toggleItem('${i.id}')`}">${esc(i.text)}</div>
+        <button class="iconbtn del" onclick="delItem('${kind}','${i.id}')" aria-label="Löschen">${I.trash}</button>
+      </div>`).join("") + `</div>`;
+  });
+  if(!o.items.length) html += `<div class="empty"><div class="big">📝</div>Die Liste ist leer.<br>Füge unten Einträge hinzu.</div>`;
+  else if(!shown) html += `<div class="empty"><div class="big">🎉</div>Alles gepackt!</div>`;
+  main.innerHTML = html;
+  const opts = allCats().map(c=>`<option ${c===lastCat?"selected":""}>${esc(c)}</option>`).join("") + `<option value="__new">+ Neue Kategorie…</option>`;
+  bottom.innerHTML = `<form class="addbar" onsubmit="addItem(event,'${kind}')">
+    <input id="newItem" placeholder="Neuer Eintrag…" autocomplete="off" enterkeyhint="done">
+    <select id="newCat" onchange="catChange(this)">${opts}</select>
+    <button type="submit" aria-label="Hinzufügen">＋</button></form>`;
+}
+
+/* ---------- Aktionen Liste ---------- */
+let lastCat = "Sonstiges";
+function catChange(sel){
+  if(sel.value==="__new"){
+    sel.value = lastCat;
+    ask("Neue Kategorie","","z. B. Strand", n=>{
+      lastCat=n; const o=document.createElement("option"); o.textContent=n; o.selected=true;
+      sel.insertBefore(o, sel.lastElementChild); $("#newItem")?.focus();
+    });
+  } else lastCat = sel.value;
+}
+function addItem(ev,kind){
+  ev.preventDefault();
+  const inp=$("#newItem"), text=inp.value.trim(); if(!text) return;
+  inp.value="";
+  const o=getObj(kind); const cat=$("#newCat").value==="__new"?"Sonstiges":$("#newCat").value;
+  lastCat = cat;
+  text.split(/\s*[;\n]\s*/).filter(Boolean).forEach(t=>o.items.push({id:uid(),text:t,cat,...(kind==="event"?{done:false}:{})}));
+  save(); render(); const ni=$("#newItem"); ni.focus();
+}
+function toggleItem(id){ const o=getObj("event"); const i=o.items.find(x=>x.id===id); i.done=!i.done; save(); render();
+  const p=progressOf(o); if(i.done && p.d===p.n) toast("🎉 Alles gepackt!"); }
+function toggleEdit(){ editing=!editing; render(); }
+function toggleHide(){ db.settings.hideDone=!db.settings.hideDone; save(); render(); }
+function delItem(kind,id){ const o=getObj(kind); const idx=o.items.findIndex(x=>x.id===id); const [rm]=o.items.splice(idx,1); save(); render();
+  undo(`„${rm.text}“ gelöscht`, ()=>{ o.items.splice(idx,0,rm); save(); render(); }); }
+let undoFn=null;
+function undo(msg,fn){ undoFn=fn; const t=$("#toast"); t.innerHTML=esc(msg)+` · <u style="pointer-events:auto;cursor:pointer" onclick="doUndo()">Rückgängig</u>`;
+  t.style.pointerEvents="auto"; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>{t.classList.remove("show");t.style.pointerEvents="none";undoFn=null;},4000); }
+function doUndo(){ if(undoFn){undoFn(); undoFn=null;} $("#toast").classList.remove("show"); }
+
+function editItem(kind,id){
+  const o=getObj(kind), cur=o.items.find(x=>x.id===id);
+  dialog(`<h2>Eintrag bearbeiten</h2>
+    <label class="f">Text</label><input type="text" id="eText" value="${esc(cur.text)}">
+    <label class="f">Kategorie</label><input type="text" id="eCat" value="${esc(cur.cat||"Sonstiges")}" list="catList">
+    <datalist id="catList">${allCats().map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
+    <div class="actions"><button class="btn danger" data-v="del">Löschen</button><span style="flex:1"></span>
+    <button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Speichern</button></div>`,
+  v=>{
+    if(v==="del"){ delItem(kind,id); return; }
+    if(v!=="ok") return;
+    const t=$("#eText").value.trim(); if(!t) return;
+    const it=getObj(kind)?.items.find(x=>x.id===id); if(!it){ toast("Eintrag wurde inzwischen gelöscht"); return; }
+    it.text=t; it.cat=$("#eCat").value.trim()||"Sonstiges"; save(); render();
+  });
+}
+
+function listMenu(kind){
+  const o=getObj(kind), isEv=kind==="event";
+  dialog(`<h2>${esc(o.name)}</h2><div class="menu">
+    <button data-v="props">✏️ Name, Symbol${isEv?" & Datum":""} ändern</button>
+    ${isEv?`<button data-v="reset">↺ Alle Haken entfernen</button>
+            <button data-v="addtpl">➕ Vorlage hinzufügen</button>
+            <button data-v="totpl">📋 Als neue Vorlage speichern</button>
+            <button data-v="updtpl">🔄 Vorlage „${esc(o.from||"")}“ aktualisieren</button>`
+          :`<button data-v="newev">🧳 Ereignis aus dieser Vorlage</button>
+            <button data-v="dup">⧉ Vorlage duplizieren</button>`}
+    <button data-v="collab">👥 ${o.share?"Gemeinsame Liste – einladen":"Gemeinsam bearbeiten"}</button>
+    <button data-v="paste">📋 Einträge aus Text einfügen</button>
+    <button data-v="share">📤 Als Datei teilen / exportieren</button>
+    <button data-v="del" class="red">🗑 ${isEv?"Ereignis":"Vorlage"} löschen</button>
+  </div><div class="actions"><button class="btn" data-v="">Schließen</button></div>`,
+  v=>{
+    if(v==="props") propsDialog(kind,o);
+    if(v==="reset"){ o.items.forEach(i=>i.done=false); save(); render(); toast("Alle Haken entfernt"); }
+    if(v==="addtpl") addTemplatesDialog(o);
+    if(v==="totpl") saveAsTemplate(o);
+    if(v==="updtpl") updateSourceTemplate(o);
+    if(v==="newev") newEventDialog(o.id);
+    if(v==="collab") startSharing(o);
+    if(v==="paste") pasteItemsDialog(kind);
+    if(v==="dup"){ const c=structuredClone(o); delete c.share; c.id=uid(); c.name+=" (Kopie)"; c.items.forEach(i=>i.id=uid()); db.templates.push(c); save(); go({name:"template",id:c.id}); }
+    if(v==="share") exportOne(kind,o);
+    if(v==="del") confirmDlg(`„${o.name}“ löschen?`, o.share?"Die Liste verschwindet nur bei dir. Wer sie mit dir teilt, behält sie.":"Das lässt sich nicht rückgängig machen.", "Löschen", ()=>{
+      syncLeave(o); const arr=isEv?db.events:db.templates; arr.splice(arr.indexOf(o),1); saveLocal(); back(); });
+  });
+  if(isEv && !(o.from && db.templates.find(t=>t.name===o.from))) { const b=$('#dlg [data-v="updtpl"]'); if(b) b.remove(); }
+}
+
+function emojiPicker(sel){
+  return `<div class="emojis" id="emo">${EMOJIS.map(e=>`<button type="button" class="${e===sel?"on":""}" onclick="pickEmoji(this)">${e}</button>`).join("")}</div>`;
+}
+function pickEmoji(b){ document.querySelectorAll("#emo button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); }
+function chosenEmoji(def){ const b=document.querySelector("#emo button.on"); return b?b.textContent:def; }
+
+function propsDialog(kind,o){
+  const isEv=kind==="event";
+  dialog(`<h2>${isEv?"Ereignis":"Vorlage"} bearbeiten</h2>
+    <label class="f">Name</label><input type="text" id="pName" value="${esc(o.name)}">
+    ${isEv?`<label class="f">Datum</label><input type="date" id="pDate" value="${esc(o.date||"")}">`:""}
+    <label class="f">Symbol</label>${emojiPicker(o.icon)}
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Speichern</button></div>`,
+  v=>{ if(v!=="ok") return; const n=$("#pName").value.trim(); if(n) o.name=n; if(isEv) o.date=$("#pDate").value; o.icon=chosenEmoji(o.icon); save(); render(); });
+}
+
+/* ---------- Ereignis anlegen ---------- */
+function mergeItems(target, items, withDone){
+  const key = i => (i.cat||"Sonstiges").toLowerCase()+"|"+i.text.toLowerCase();
+  const have = new Set(target.map(key));
+  items.forEach(i=>{ if(have.has(key(i))) return; have.add(key(i));
+    target.push({id:uid(), text:i.text, cat:i.cat||"Sonstiges", ...(withDone?{done:false}:{})}); });
+  return target;
+}
+function tplPicker(pre){
+  return db.templates.length ? [...db.templates].sort((a,b)=>a.name.localeCompare(b.name,"de")).map(t=>`
+    <label class="tpl-pick"><input type="checkbox" value="${t.id}" ${t.id===pre?"checked":""}>
+    <span style="font-size:1.3rem">${esc(t.icon||"📦")}</span><span style="flex:1">${esc(t.name)}</span>
+    <span class="sub" style="color:var(--muted);font-size:.8rem">${t.items.length}</span></label>`).join("")
+  : `<p class="hint">Keine Vorlagen vorhanden – es wird eine leere Liste angelegt.</p>`;
+}
+function newEventDialog(preTpl){
+  dialog(`<h2>Neues Ereignis</h2>
+    <label class="f">Name</label><input type="text" id="nName" placeholder="z. B. Ostsee 2027">
+    <label class="f">Datum (optional)</label><input type="date" id="nDate">
+    <label class="f">Vorlagen (mehrere möglich, keine = leere Liste)</label>
+    <div id="tplSel">${tplPicker(preTpl)}</div>
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Anlegen</button></div>`,
+  v=>{
+    if(v!=="ok") return;
+    const ids=[...document.querySelectorAll("#tplSel input:checked")].map(x=>x.value);
+    const tpls=ids.map(id=>db.templates.find(t=>t.id===id));
+    let name=$("#nName").value.trim();
+    if(!name) name = tpls.length ? tpls.map(t=>t.name).join(" + ") : "Neue Liste";
+    const ev={id:uid(), name, date:$("#nDate").value, icon:tpls[0]?.icon||"🧳",
+      from: tpls.length===1?tpls[0].name:"", items:[]};
+    tpls.forEach(t=>mergeItems(ev.items,t.items,true));
+    db.events.push(ev); save();
+    if(view.name!=="event") go({name:"event",id:ev.id}); else { view={name:"event",id:ev.id}; render(); }
+    toast(tpls.length?"Liste aus Vorlage erstellt – jetzt anpassen":"Leere Liste angelegt");
+  });
+  setTimeout(()=>$("#nName")?.focus(),50);
+}
+function addTemplatesDialog(ev){
+  dialog(`<h2>Vorlage hinzufügen</h2><p class="hint">Einträge der gewählten Vorlagen werden ergänzt (Doppelte in derselben Kategorie übersprungen).</p>
+    <div id="tplSel">${tplPicker()}</div>
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Hinzufügen</button></div>`,
+  v=>{ if(v!=="ok") return; const before=ev.items.length;
+    [...document.querySelectorAll("#tplSel input:checked")].forEach(x=>mergeItems(ev.items, db.templates.find(t=>t.id===x.value).items, true));
+    save(); render(); toast(`${ev.items.length-before} Einträge hinzugefügt`); });
+}
+function saveAsTemplate(ev){
+  ask("Als Vorlage speichern", ev.name, "Name der Vorlage", name=>{
+    db.templates.push({id:uid(), name, icon:ev.icon||"📦", items:ev.items.map(i=>({id:uid(),text:i.text,cat:i.cat}))});
+    save(); toast("Als Vorlage gespeichert");
+  });
+}
+function updateSourceTemplate(ev){
+  const t=db.templates.find(x=>x.name===ev.from); if(!t) return;
+  confirmDlg(`Vorlage „${t.name}“ aktualisieren?`, "Die Einträge der Vorlage werden durch die Einträge dieser Liste ersetzt.", "Aktualisieren", ()=>{
+    t.items = ev.items.map(i=>({id:uid(),text:i.text,cat:i.cat})); save(); toast("Vorlage aktualisiert"); });
+}
+// Liest Listen wie „Badzeug“ + „- Zahnpasta“ oder „Kategorie: Eintrag“
+function parseItemsText(txt, cat){
+  const def = cat = cat || "Sonstiges";
+  let inBlock = false;   // Leerzeile nach einer „- …“-Liste beendet die Kategorie
+  const lines = String(txt||"").split("\n").map(l=>l.trim()), out = [];
+  const isBullet = l => /^[-•*–]\s*/.test(l);
+  const nextLine = i => { for(let j=i+1;j<lines.length;j++) if(lines[j]) return lines[j]; return ""; };
+  lines.forEach((l,i)=>{
+    if(!l){ if(inBlock){ cat=def; inBlock=false; } return; }
+    if(isBullet(l)){ inBlock=true; const t=l.replace(/^[-•*–]\s*/,"").trim(); if(t) out.push({id:uid(),cat,text:t}); return; }
+    const m=l.match(/^([^:]{1,30}):\s*(.+)$/);
+    if(m){ out.push({id:uid(),cat:m[1].trim(),text:m[2].trim()}); return; }
+    if(/:$/.test(l)){ cat=l.slice(0,-1).trim()||cat; inBlock=true; return; }
+    if(isBullet(nextLine(i))){ cat=l; inBlock=true; return; }
+    out.push({id:uid(),cat,text:l});
+  });
+  return out;
+}
+function pasteItemsDialog(kind){
+  const o=getObj(kind);
+  dialog(`<h2>Einträge einfügen</h2>
+    <p class="hint" style="margin:0">Eine Zeile pro Eintrag. Überschriften mit „- Einträgen“ darunter werden zu Kategorien.</p>
+    <textarea id="pItems" rows="9" style="margin-top:10px" placeholder="Badzeug&#10;- Zahnpasta&#10;- Deo&#10;Kleidung: Jacke"></textarea>
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Einfügen</button></div>`,
+  v=>{
+    if(v!=="ok") return; const o2=getObj(kind); if(!o2) return;
+    const before=o2.items.length; mergeItems(o2.items, parseItemsText($("#pItems").value, lastCat), kind==="event");
+    save(); render(); toast(`${o2.items.length-before} Einträge eingefügt`);
+  });
+  setTimeout(()=>$("#pItems")?.focus(),50);
+}
+function newTemplateDialog(){
+  dialog(`<h2>Neue Vorlage</h2>
+    <label class="f">Name</label><input type="text" id="tName" placeholder="z. B. Camping">
+    <label class="f">Symbol</label>${emojiPicker("📦")}
+    <label class="f">Einträge (optional, einer pro Zeile – Überschriften mit „- Einträgen“ darunter werden Kategorien)</label>
+    <textarea id="tItems" rows="7" placeholder="Kleidung&#10;- Regenjacke&#10;- Socken&#10;Zelt"></textarea>
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Anlegen</button></div>`,
+  v=>{
+    if(v!=="ok") return; const name=$("#tName").value.trim(); if(!name) return;
+    const items=parseItemsText($("#tItems").value);
+    const t={id:uid(),name,icon:chosenEmoji("📦"),items}; db.templates.push(t); save(); go({name:"template",id:t.id});
+  });
+  setTimeout(()=>$("#tName")?.focus(),50);
+}
+
+/* ---------- Dialog ---------- */
+function dialog(html, cb){
+  const d=$("#dlg"); d.innerHTML=html;
+  d.onclick = e=>{
+    if(e.target===d){ d.close(); return; }
+    const b=e.target.closest("[data-v]"); if(!b) return;
+    const v=b.dataset.v; d.close(); cb && cb(v);
+  };
+  d.querySelectorAll("input[type=text]").forEach(i=>i.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); const ok=d.querySelector('[data-v="ok"]'); ok&&ok.click(); }}));
+  d.showModal();
+}
+
+function ask(title, value, placeholder, cb){
+  dialog(`<h2>${esc(title)}</h2><input type="text" id="askIn" value="${esc(value)}" placeholder="${esc(placeholder)}">
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">OK</button></div>`,
+  v=>{ if(v!=="ok") return; const n=$("#askIn").value.trim(); if(n) cb(n); });
+  setTimeout(()=>{ const i=$("#askIn"); if(i){ i.focus(); i.select(); } },50);
+}
+function confirmDlg(title, text, okLabel, cb){
+  dialog(`<h2>${esc(title)}</h2><p class="hint" style="margin:0">${esc(text)}</p>
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">${esc(okLabel)}</button></div>`,
+  v=>{ if(v==="ok") cb(); });
+}
+
+/* ---------- Export / Import ---------- */
+async function shareFile(name, obj){
+  const blob=new Blob([JSON.stringify(obj,null,1)],{type:"application/json"});
+  const file=new File([blob],name,{type:"application/json"});
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+    try{ await navigator.share({files:[file],title:name}); return; }catch(e){ if(e.name==="AbortError") return; }
+  }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000); toast("Datei gespeichert");
+}
+const safeName = s => s.replace(/[^\wäöüÄÖÜß\- ]+/g,"").trim().replace(/\s+/g,"_") || "Liste";
+function exportAll(){ shareFile(`Packliste_Sicherung_${today()}.json`, {app:"packliste",version:1,templates:db.templates,events:db.events}); }
+function exportOne(kind,o){ shareFile(`${safeName(o.name)}.json`, {app:"packliste",version:1,[kind==="event"?"events":"templates"]:[o]}); }
+function pickImport(){ $("#fileIn").value=""; $("#fileIn").click(); }
+$("#fileIn").addEventListener("change", async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{
+    const data=JSON.parse(await f.text());
+    if(data.app!=="packliste") throw 0;
+    const fix = arr => (arr||[]).filter(x=>x&&x.name&&Array.isArray(x.items)).map(({share,...x})=>({...x,id:uid(),items:x.items.map(i=>({...i,id:uid()}))}));
+    const t=fix(data.templates), ev=fix(data.events);
+    db.templates.push(...t); db.events.push(...ev); save(); render();
+    toast(`Importiert: ${t.length} Vorlage(n), ${ev.length} Ereignis(se)`);
+  }catch(err){ toast("Datei konnte nicht gelesen werden"); }
+});
+function restoreDefaults(){
+  const have=new Set(db.templates.map(t=>t.name)); const add=defaultData().templates.filter(t=>!have.has(t.name));
+  db.templates.push(...add); save(); toast(add.length?`${add.length} Vorlage(n) wiederhergestellt`:"Alle Beispielvorlagen sind schon vorhanden");
+}
+
+/* ---------- Gemeinsame Listen ----------
+   Wie bei der Einkaufsliste: Mehrere Handys teilen eine Liste. Änderungen laufen verschlüsselt über einen
+   öffentlichen ntfy-Server (Standard: ntfy.sh – kostenlos, ohne Konto). Der Schlüssel steckt nur im
+   Einladungslink, der Server sieht nur Zeichensalat.
+   Abgleich: Jeder Eintrag (und die Listen-Eigenschaften „__p“) hat einen Zeitstempel. Die neueste Änderung
+   gewinnt, gelöschte Einträge merkt sich die Liste 30 Tage. Der Server hebt Nachrichten nur einige Stunden
+   auf; wer länger offline war, fragt beim Öffnen die anderen nach dem aktuellen Stand. */
+const SYNC_DEFAULT = "https://ntfy.sh";
+const SYNC_CHUNK = 2400;                 // Zeichen pro Nachricht (ntfy erlaubt 4096 inkl. Verschlüsselung)
+const SYNC_DEAD_DAYS = 30;
+const QR_LIB = "vendor/qrcode.js";
+const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const unb64u = s => { s = s.replace(/-/g,"+").replace(/_/g,"/"); while (s.length % 4) s += "="; return Uint8Array.from(atob(s), c=>c.charCodeAt(0)); };
+const rndB64 = n => b64u(crypto.getRandomValues(new Uint8Array(n)));
+function lsGet(k, d){ try{ const v = localStorage.getItem(KEY + "." + k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } }
+function lsSet(k, v){ try{ localStorage.setItem(KEY + "." + k, JSON.stringify(v)); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(KEY + "." + k); }catch(e){} }
+const DEVICE = lsGet("device", "") || (()=>{ const d = rndB64(9); lsSet("device", d); return d; })();
+const syncs = new Map();                 // Listen-ID → {es, ok, key, timer, retry, busy, hello}
+function myName(){ return String(lsGet("myName", "") || "").trim(); }
+function syncServer(){ return (lsGet("syncServer", "") || SYNC_DEFAULT).replace(/\/+$/, ""); }
+function allObjs(){ return db.events.concat(db.templates); }
+function objById(id){ return allObjs().find(o=>o.id === id); }
+function kindOf(o){ return db.events.includes(o) ? "event" : "template"; }
+function smeta(o){ return Object.assign({base:{}, mt:{}, dead:{}, pend:{}, last:"", seen:{}, names:{}, lastOk:0, lastHi:0}, lsGet("sync." + o.id, {})); }
+function ssave(o, m){ lsSet("sync." + o.id, m); }
+
+/* Einträge als Datensätze: gleiche Form auf allen Geräten */
+function norm(id, r){
+  return id === "__p"
+    ? {kind: r.kind === "template" ? "template" : "event", name: String(r.name || ""), icon: String(r.icon || ""), date: String(r.date || "")}
+    : {text: String(r.text || ""), cat: String(r.cat || "Sonstiges"), done: !!r.done, o: +r.o || 0};
+}
+const sig = (id, r) => JSON.stringify(norm(id, r));
+function records(o){
+  const isEv = kindOf(o) === "event";
+  const recs = {__p: norm("__p", {kind: isEv ? "event" : "template", name: o.name, icon: o.icon, date: isEv ? o.date : ""})};
+  let max = 0; o.items.forEach(i=>{ if (typeof i.o === "number" && i.o > max) max = i.o; });
+  o.items.forEach(i=>{ if (typeof i.o !== "number") i.o = ++max; recs[i.id] = norm(i.id, {...i, done: isEv && i.done}); });
+  return recs;
+}
+function fromRecords(o, recs){
+  const isEv = kindOf(o) === "event", p = recs.__p;
+  if (p){ if (p.name) o.name = p.name; if (p.icon) o.icon = p.icon; if (isEv) o.date = p.date || ""; }
+  o.items = Object.entries(recs).filter(([id])=>id !== "__p").sort((a, b)=>a[1].o - b[1].o)
+    .map(([id, r])=>({id, text: r.text, cat: r.cat, o: r.o, ...(isEv ? {done: !!r.done} : {})}));
+}
+
+/* Verschlüsselung (AES-GCM, Schlüssel nur im Einladungslink) */
+async function syncKey(o){
+  const s = syncs.get(o.id) || {};
+  if (s.key) return s.key;
+  const key = await crypto.subtle.importKey("raw", unb64u(o.share.k), "AES-GCM", false, ["encrypt","decrypt"]);
+  s.key = key; syncs.set(o.id, s); return key;
+}
+async function seal(o, obj){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({name:"AES-GCM", iv}, await syncKey(o), new TextEncoder().encode(JSON.stringify(obj)));
+  const out = new Uint8Array(12 + ct.byteLength); out.set(iv); out.set(new Uint8Array(ct), 12);
+  return "e1." + b64u(out);
+}
+async function unseal(o, txt){
+  if (typeof txt !== "string" || !txt.startsWith("e1.")) return null;
+  try{
+    const b = unb64u(txt.slice(3));
+    const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:b.slice(0,12)}, await syncKey(o), b.slice(12));
+    return JSON.parse(new TextDecoder().decode(pt));
+  }catch(e){ return null; }       // falscher Schlüssel oder fremde Nachricht: ignorieren
+}
+
+/* Lokale Änderungen finden: Vergleich mit dem zuletzt abgeglichenen Stand */
+function syncCheck(o){
+  if (!o || !o.share) return;
+  const recs = records(o), m = smeta(o), now = Date.now();
+  let ch = false;
+  for (const [id, r] of Object.entries(recs)){
+    const s = sig(id, r);
+    if (m.base[id] !== s){ m.base[id] = s; m.mt[id] = now; m.pend[id] = now; delete m.dead[id]; ch = true; }
+  }
+  for (const id of Object.keys(m.base)) if (!recs[id]){ delete m.base[id]; delete m.mt[id]; m.dead[id] = now; m.pend[id] = now; ch = true; }
+  if (!ch) return;
+  ssave(o, m); saveLocal(); syncPublishSoon(o.id);
+}
+const touchTimers = {};
+function syncTouched(o){
+  if (!o || !o.share) return;
+  clearTimeout(touchTimers[o.id]); touchTimers[o.id] = setTimeout(()=>syncCheck(objById(o.id)), 300);
+}
+
+/* Senden */
+const pubTimers = {};
+function syncPublishSoon(id, ms){ clearTimeout(pubTimers[id]); pubTimers[id] = setTimeout(()=>syncPublish(id), ms == null ? 600 : ms); }
+async function syncSend(o, obj){
+  if (myName()) obj.nm = myName().slice(0, 30);
+  const body = await seal(o, obj);
+  const r = await fetch(`${o.share.s || syncServer()}/${o.share.t}`, {method:"POST", body});
+  if (!r.ok) throw new Error("http " + r.status);
+}
+async function syncPublish(id){
+  const o = objById(id); if (!o || !o.share) return;
+  const s = syncs.get(id) || {}; if (s.busy){ syncPublishSoon(id, 1500); return; }
+  const m = smeta(o), snap = Object.assign({}, m.pend), ids = Object.keys(snap);
+  if (!ids.length) return;
+  const recs = records(o);
+  const msgs = []; let cur = {k:"ops", d:DEVICE, r:{}, x:{}}, size = 0;
+  for (const rid of ids){
+    const part = recs[rid] ? ["r", {...recs[rid], m: m.mt[rid] || snap[rid]}] : (m.dead[rid] ? ["x", m.dead[rid]] : null);
+    if (!part) continue;
+    const len = JSON.stringify(part[1]).length + rid.length + 6;
+    if (size + len > SYNC_CHUNK && size){ msgs.push(cur); cur = {k:"ops", d:DEVICE, r:{}, x:{}}; size = 0; }
+    cur[part[0]][rid] = part[1]; size += len;
+  }
+  if (size) msgs.push(cur);
+  s.busy = true; syncs.set(id, s);
+  try{
+    for (const msg of msgs) await syncSend(o, msg);
+    const m2 = smeta(o);
+    for (const rid of ids) if (m2.pend[rid] === snap[rid]) delete m2.pend[rid];   // nur, was sich seitdem nicht wieder geändert hat
+    ssave(o, m2); s.retry = 0;
+  }catch(e){
+    s.retry = Math.min((s.retry || 0) + 1, 6);
+    syncPublishSoon(id, 5000 * Math.pow(2, s.retry - 1));                       // später nochmal (5 s, 10 s, 20 s …)
+  }finally{ s.busy = false; syncStatusChanged(id); }
+}
+function syncSendAll(o){              // allen den kompletten Stand schicken (z. B. für ein neues Gerät)
+  const m = smeta(o), now = Date.now();
+  for (const id of Object.keys(m.base)) m.pend[id] = now;
+  for (const id of Object.keys(m.dead)) m.pend[id] = now;
+  ssave(o, m); syncPublishSoon(o.id, 300 + Math.random() * 1500);
+}
+
+/* Empfangen */
+async function syncApply(o, obj){
+  syncCheck(o);                                   // eigene, noch nicht erfasste Änderungen zuerst sichern
+  const recs = records(o), m = smeta(o);
+  let changed = false;
+  for (const [id, r] of Object.entries(obj.r || {})){
+    if (!r || typeof r !== "object") continue;
+    if (id === "__p" ? typeof r.name !== "string" : typeof r.text !== "string") continue;
+    const rm = +r.m || 0;
+    if ((m.dead[id] || 0) >= rm) continue;
+    const rec = norm(id, r), L = recs[id], lm = L ? (m.mt[id] || 0) : -1;
+    if (!L || rm > lm || (rm === lm && obj.d > DEVICE && sig(id, L) !== sig(id, rec))){
+      recs[id] = rec; m.base[id] = sig(id, rec); m.mt[id] = rm; delete m.pend[id]; changed = true;
+    }
+  }
+  for (const [id, ts] of Object.entries(obj.x || {})){
+    if (id === "__p") continue;
+    const t = +ts || 0;
+    if (recs[id] && (m.mt[id] || 0) > t) continue;      // hier neuer bearbeitet: bleibt
+    if (recs[id]){ delete recs[id]; changed = true; }
+    delete m.base[id]; delete m.mt[id]; delete m.pend[id];
+    m.dead[id] = Math.max(m.dead[id] || 0, t);
+  }
+  ssave(o, m);
+  if (!changed) return;
+  fromRecords(o, recs); saveLocal(); render();
+}
+function syncConnect(id, since){
+  const o = objById(id); if (!o || !o.share) return;
+  syncStop(id, true);
+  const m = smeta(o);
+  const s = syncs.get(id) || {}; syncs.set(id, s);
+  const q = since || m.last || "";
+  const url = `${o.share.s || syncServer()}/${o.share.t}/sse${q ? "?since=" + encodeURIComponent(q) : ""}`;
+  let es;
+  try{ es = new EventSource(url); }catch(e){ return; }
+  s.es = es; s.ok = false;
+  const onOpen = ()=>{
+    if (s.es !== es) return;
+    const first = !s.ok; s.ok = true;
+    const o2 = objById(id); if (!o2 || !o2.share) return;
+    const mm = smeta(o2); mm.lastOk = Date.now(); ssave(o2, mm);
+    if (s.hello){ s.hello = false; mm.lastHi = Date.now(); ssave(o2, mm); syncSend(o2, {k:"hello", d:DEVICE, ts:Date.now()}).catch(()=>{ s.hello = true; }); }
+    else if (!mm.lastHi || Date.now() - mm.lastHi > 6 * 36e5){ mm.lastHi = Date.now(); ssave(o2, mm); syncSend(o2, {k:"hi", d:DEVICE}).catch(()=>{}); }
+    if (first && Object.keys(mm.pend).length) syncPublishSoon(id, 200);
+    if (first) syncStatusChanged(id);
+  };
+  const onData = async ev=>{
+    let d; try{ d = JSON.parse(ev.data); }catch(e){ return; }
+    if (d.event === "open" || d.event === "keepalive"){ onOpen(); return; }
+    if (d.event !== "message") return;
+    const o2 = objById(id); if (!o2 || !o2.share) return;
+    const mm = smeta(o2); mm.last = d.id; mm.lastOk = Date.now(); ssave(o2, mm);
+    const obj = await unseal(o2, d.message);
+    if (!obj || obj.d === DEVICE) return;
+    const m3 = smeta(o2);
+    if (obj.k === "bye"){ delete m3.seen[obj.d]; delete m3.names[obj.d]; ssave(o2, m3); syncStatusChanged(id); return; }   // hat die Liste verlassen
+    m3.seen[obj.d] = Date.now(); if (obj.nm) m3.names[obj.d] = String(obj.nm).slice(0, 30); ssave(o2, m3);
+    if (obj.k === "hello"){ if (Date.now() - (+obj.ts || 0) < 12 * 36e5) syncSendAll(o2); }
+    else if (obj.k === "ops") await syncApply(o2, obj);
+    syncStatusChanged(id);
+  };
+  es.onmessage = onData;
+  es.addEventListener("open", onOpen);
+  es.addEventListener("keepalive", onData);
+  es.onerror = ()=>{
+    s.ok = false; syncStatusChanged(id);
+    if (es.readyState === 2){ clearTimeout(s.timer); s.timer = setTimeout(()=>syncConnect(id), 8000); }
+  };
+}
+function syncStop(id, keep){
+  const s = syncs.get(id); if (!s) return;
+  if (s.es) try{ s.es.close(); }catch(e){}
+  clearTimeout(s.timer); s.es = null; s.ok = false;
+  if (!keep) syncs.delete(id);
+}
+function syncStart(o, opts){
+  if (!o || !o.share) return;
+  opts = opts || {};
+  const m = smeta(o);
+  const cut = Date.now() - SYNC_DEAD_DAYS * 864e5;            // abgelaufene Löschmarken aufräumen
+  for (const [id, ts] of Object.entries(m.dead)) if (ts < cut && !m.pend[id]) delete m.dead[id];
+  ssave(o, m);
+  const s = syncs.get(o.id) || {}; syncs.set(o.id, s);
+  // Lange nichts gehört (Server hebt nur Stunden auf) oder neu beigetreten: die anderen nach dem Stand fragen
+  s.hello = opts.join || !m.lastOk || Date.now() - m.lastOk > 10 * 36e5;
+  syncCheck(o);
+  syncConnect(o.id, opts.join ? "all" : "");
+}
+function syncAll(){ allObjs().forEach(o=>{ if (o.share) syncStart(o); }); }
+function syncStateOf(o){
+  if (!o || !o.share) return null;
+  const s = syncs.get(o.id) || {}, m = smeta(o);
+  const members = Object.entries(m.seen).filter(([d, t])=>Date.now() - t < 60 * 864e5).sort((a, b)=>b[1] - a[1])
+    .map(([d, t])=>({dev:d, name:m.names[d] || "", t}));
+  return {ok: !!s.ok, pending: Object.keys(m.pend).length, members};
+}
+function syncStatusChanged(id){
+  if ((view.name === "event" || view.name === "template") && view.id === id) render();
+  const o = objById(id), st = syncStateOf(o);
+  const box = $("#shStatus"); if (box && st && box.dataset.id === id) box.innerHTML = syncStatusHtml(st);
+  const mb = $("#shMembers"); if (mb && st && mb.dataset.id === id) mb.innerHTML = membersHtml(st);
+}
+window.addEventListener("online", ()=>{ allObjs().forEach(o=>{ if (o.share){ syncConnect(o.id); syncPublishSoon(o.id, 500); } }); });
+document.addEventListener("visibilitychange", ()=>{
+  if (document.visibilityState !== "visible") return;
+  allObjs().forEach(o=>{ if (o.share){ const s = syncs.get(o.id); if (!s || !s.es || s.es.readyState === 2) syncStart(o); } });
+});
+
+/* Anzeige */
+function agoText(t){
+  const m = Math.round((Date.now() - t) / 6e4);
+  if (m < 2) return "gerade eben";
+  if (m < 60) return `vor ${m} Min.`;
+  const h = Math.round(m / 60); if (h < 24) return `vor ${h} Std.`;
+  const d = Math.round(h / 24); return d === 1 ? "vor 1 Tag" : `vor ${d} Tagen`;
+}
+function syncStatusHtml(st){
+  return `<span class="dot ${st.ok ? "" : "off"}"></span> ${st.ok ? "Verbunden" : "Gerade offline – Änderungen werden nachgeholt"}${st.members.length ? "" : " · noch niemand beigetreten"}${st.pending && st.ok ? " · sendet …" : ""}`;
+}
+function membersHtml(st){
+  const me = myName();
+  return `<div class="memb"><span class="dot"></span><b>${me ? esc(me) + " " : ""}(du)</b><small>dieses Gerät</small></div>`
+    + st.members.map(x=>`<div class="memb"><span class="dot ${Date.now() - x.t > 7 * 864e5 ? "off" : ""}"></span><b>${x.name ? esc(x.name) : "Unbekannt"}</b><small>${agoText(x.t)}</small></div>`).join("");
+}
+function sharedLine(o){
+  const st = syncStateOf(o); if (!st) return "";
+  const names = st.members.map(x=>x.name || "Unbekannt");
+  const txt = names.length ? `Geteilt mit <b>${esc(names.join(", "))}</b>` : "Noch niemand beigetreten";
+  return `<div class="row" style="margin-top:10px;cursor:pointer" onclick="startSharing(getObj('${kindOf(o)}'))">
+    <span class="shared">${I.people.replace("<svg",'<svg style="width:16px;height:16px"')} <span>${txt}</span></span>
+    <span><span class="dot ${st.ok ? "" : "off"}"></span> ${st.ok ? "live" : "offline"}</span></div>`;
+}
+
+/* Einladung: Link mit #join=… (Thema, Schlüssel, Name, Art, Server) */
+function inviteUrl(o){
+  const p = {t:o.share.t, k:o.share.k, n:o.name, c:kindOf(o)}; if (o.share.s) p.s = o.share.s;
+  return location.origin + location.pathname + "#join=" + b64u(new TextEncoder().encode(JSON.stringify(p)));
+}
+function parseInvite(txt){
+  const mm = String(txt || "").match(/#join=([A-Za-z0-9_-]+)/); if (!mm) return null;
+  try{
+    const p = JSON.parse(new TextDecoder().decode(unb64u(mm[1])));
+    if (!/^[A-Za-z0-9_-]{8,64}$/.test(p.t) || typeof p.k !== "string" || unb64u(p.k).length !== 32) return null;
+    if (p.s && !/^https?:\/\/[^\s"'<>]+$/.test(p.s)) return null;
+    return {t:p.t, k:p.k, n:String(p.n || "Gemeinsame Liste").slice(0, 40), c:p.c === "template" ? "template" : "event", s:p.s || ""};
+  }catch(e){ return null; }
+}
+function cryptoOk(){
+  if (window.crypto && crypto.subtle) return true;
+  toast("Gemeinsame Listen gehen nur über eine sichere Adresse (https)."); return false;
+}
+function nameField(id){
+  return `<label class="f" for="${id}">Dein Name (sehen die anderen)</label><input type="text" id="${id}" maxlength="30" autocomplete="given-name" value="${esc(myName())}" placeholder="z. B. Anna">`;
+}
+function openJoin(inv){
+  const have = allObjs().find(o=>o.share && o.share.t === inv.t);
+  if (have){ go({name:kindOf(have), id:have.id}); toast(`„${have.name}“ ist schon gemeinsam auf diesem Gerät.`); return; }
+  if (!cryptoOk()) return;
+  dialog(`<h2>„${esc(inv.n)}“ beitreten?</h2>
+    <p class="hint" style="margin:0">Du wurdest zu einer gemeinsamen ${inv.c === "template" ? "Vorlage" : "Packliste"} eingeladen. Was einer einträgt oder abhakt, sehen die anderen sofort. Deine anderen Listen bleiben, wie sie sind.</p>
+    ${nameField("jnName")}
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Beitreten</button></div>`,
+  v=>{
+    if (v !== "ok") return;
+    const nm = $("#jnName").value.trim();
+    if (nm) lsSet("myName", nm.slice(0, 30));
+    const isEv = inv.c !== "template";
+    const o = {id:uid(), name:inv.n, icon:isEv ? "🧳" : "📦", items:[], share:{t:inv.t, k:inv.k, ...(inv.s ? {s:inv.s} : {})}, ...(isEv ? {date:""} : {})};
+    (isEv ? db.events : db.templates).push(o);
+    // Eigenschaften nicht als „neu“ senden – der Stand der anderen soll gewinnen
+    const m = smeta(o), p = records(o).__p; m.base.__p = sig("__p", p); m.mt.__p = 0; ssave(o, m);
+    saveLocal(); go({name:isEv ? "event" : "template", id:o.id});
+    syncStart(o, {join:true});
+    toast(`Beigetreten. „${inv.n}“ wird geladen …`);
+  });
+  setTimeout(()=>{ const i = $("#jnName"); if (i && !i.value) i.focus(); }, 50);
+}
+function checkInviteHash(){
+  if (!location.hash.startsWith("#join=")) return;
+  const inv = parseInvite(location.hash);
+  try{ history.replaceState(history.state, "", location.pathname + location.search); }catch(e){}
+  if (inv) openJoin(inv); else toast("Der Einladungslink ist unvollständig.");
+}
+window.addEventListener("hashchange", checkInviteHash);
+function joinDialog(){
+  dialog(`<h2>Gemeinsamer Liste beitreten</h2>
+    <p class="hint" style="margin:0">Tippe einfach auf den Einladungslink, den du bekommen hast – oder füge ihn hier ein.</p>
+    <label class="f" for="joinIn">Einladungslink</label><input type="text" id="joinIn" placeholder="https://…#join=…" autocomplete="off">
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Weiter</button></div>`,
+  v=>{
+    if (v !== "ok") return;
+    const inv = parseInvite($("#joinIn").value);
+    if (inv) setTimeout(()=>openJoin(inv), 0); else toast("Das ist kein gültiger Einladungslink.");
+  });
+  setTimeout(()=>$("#joinIn")?.focus(), 50);
+}
+
+/* Teilen */
+function startSharing(o){
+  if (!o) return;
+  if (o.share){ inviteDialog(o); return; }
+  if (!cryptoOk()) return;
+  dialog(`<h2>Gemeinsam bearbeiten</h2>
+    <p class="hint" style="margin:0">Nutze „${esc(o.name)}“ zusammen mit anderen. Alle sehen dieselbe Liste, Änderungen erscheinen sofort bei allen.</p>
+    ${nameField("shName")}
+    <p class="hint">Die Änderungen laufen verschlüsselt über einen kostenlosen Vermittlungsdienst (ntfy.sh). Der Schlüssel steckt nur in eurem Einladungslink. Kein Konto, keine Anmeldung.</p>
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Gemeinsam nutzen</button></div>`,
+  v=>{
+    if (v !== "ok") return;
+    const nm = $("#shName").value.trim(); if (nm) lsSet("myName", nm.slice(0, 30));
+    o.share = {t:"pkl_" + rndB64(18), k:rndB64(32)};
+    if (syncServer() !== SYNC_DEFAULT) o.share.s = syncServer();
+    lsDel("sync." + o.id); saveLocal(); syncStart(o); render();
+    setTimeout(()=>inviteDialog(o), 0);
+  });
+  setTimeout(()=>{ const i = $("#shName"); if (i && !i.value) i.focus(); }, 50);
+}
+let qrLoading = null;
+function loadQr(){
+  if (window.qrcode) return Promise.resolve();
+  return qrLoading ||= new Promise((ok, no)=>{ const s = document.createElement("script"); s.src = QR_LIB; s.onload = ok; s.onerror = ()=>{ qrLoading = null; no(); }; document.head.appendChild(s); });
+}
+async function showQr(url){
+  try{
+    await loadQr();
+    const qr = window.qrcode(0, "M"); qr.addData(url); qr.make();
+    const box = $("#shQr"); if (box) box.innerHTML = qr.createSvgTag({cellSize:4, margin:2, scalable:true});
+  }catch(e){ const box = $("#shQr"); if (box) box.hidden = true; }
+}
+function inviteDialog(o){
+  const url = inviteUrl(o), st = syncStateOf(o);
+  dialog(`<h2>Gemeinsame Liste</h2>
+    <p class="hint" style="margin:0" id="shStatus" data-id="${o.id}">${syncStatusHtml(st)}</p>
+    <label class="f">Dabei</label>
+    <div id="shMembers" data-id="${o.id}">${membersHtml(st)}</div>
+    <label class="f">Andere einladen: QR-Code mit der Kamera scannen lassen oder Link schicken</label>
+    <div class="qr" id="shQr"></div>
+    <div class="btnrow">
+      <button class="btn primary" onclick="sendInvite('${o.id}')">Einladung senden</button>
+      <button class="btn" onclick="copyText(inviteUrl(objById('${o.id}')),'Link kopiert')">Link kopieren</button>
+    </div>
+    <div class="actions"><button class="btn danger" data-v="leave">Liste verlassen</button><span style="flex:1"></span>
+      <button class="btn" data-v="name">Name ändern</button><button class="btn" data-v="">Fertig</button></div>`,
+  v=>{
+    if (v === "name") ask("Dein Name", myName(), "z. B. Anna", n=>{ lsSet("myName", n.slice(0, 30)); allObjs().forEach(x=>{ if (x.share) syncSend(x, {k:"hi", d:DEVICE}).catch(()=>{}); }); toast("Name gespeichert"); });
+    if (v === "leave") confirmDlg("Liste verlassen?", "Du behältst deine Kopie, sie wird aber nicht mehr abgeglichen. Die anderen können weiter gemeinsam daran arbeiten.", "Verlassen", ()=>{
+      syncLeave(o); render(); toast("Du hast die gemeinsame Liste verlassen");
+    });
+  });
+  showQr(url);
+}
+function syncLeave(o){
+  if (!o || !o.share) return;
+  const share = o.share;
+  syncSend({...o, share}, {k:"bye", d:DEVICE}).catch(()=>{});
+  syncStop(o.id); lsDel("sync." + o.id); delete o.share; saveLocal();
+}
+async function copyText(t, msg){
+  try{ await navigator.clipboard.writeText(t); toast(msg); }catch(e){ toast("Kopieren nicht möglich – bitte Link markieren"); }
+}
+async function sendInvite(id){
+  const o = objById(id); if (!o) return;
+  const url = inviteUrl(o), text = `Lass uns die Packliste „${o.name}“ zusammen bearbeiten:`;
+  if (navigator.share){ try{ await navigator.share({title:"Packliste", text, url}); return; }catch(e){ if (e.name === "AbortError") return; } }
+  copyText(text + " " + url, "Einladung kopiert – jetzt z. B. in WhatsApp einfügen");
+}
+function serverDialog(){
+  dialog(`<h2>Server für gemeinsame Listen</h2>
+    <p class="hint" style="margin:0">Nur ändern, wenn du einen eigenen ntfy-Server hast. Gilt für neu geteilte Listen.</p>
+    <label class="f" for="srvIn">Server</label><input type="text" id="srvIn" value="${esc(syncServer())}">
+    <div class="actions"><button class="btn" data-v="reset">Standard</button><span style="flex:1"></span><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Speichern</button></div>`,
+  v=>{
+    if (v === "reset"){ lsDel("syncServer"); render(); return; }
+    if (v !== "ok") return;
+    const s = $("#srvIn").value.trim().replace(/\/+$/, "");
+    if (/^https?:\/\/\S+$/.test(s)){ lsSet("syncServer", s); render(); } else toast("Bitte eine Adresse mit https:// eingeben");
+  });
+}
+
+/* ---------- Start ---------- */
+load(); render(); syncAll(); checkInviteHash();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
