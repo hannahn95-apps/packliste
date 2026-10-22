@@ -85,7 +85,7 @@ nav button.active{color:var(--accent);font-weight:600}
 .addbar select{max-width:34%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:0 8px}
 .addbar button{border:0;background:var(--accent);color:#fff;border-radius:12px;width:46px;flex:none;cursor:pointer;font-size:1.4rem}
 .toggle{display:flex;gap:8px;margin:10px 0 4px;flex-wrap:wrap}
-.chip{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:6px 12px;font-size:.85rem;cursor:pointer}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:20px;padding:6px 12px;font-size:.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
 /* Dialoge */
 dialog{border:0;border-radius:20px;background:var(--card);color:var(--text);padding:20px;width:min(92vw,440px);
@@ -177,6 +177,7 @@ const I = {
   upload:'<svg viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>',
   search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
   x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  kid:'<svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="3"/><path d="M8 21v-6l-2-4h12l-2 4v6"/><path d="M8 11l4 2 4-2"/></svg>',
   people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.4 0 4.1 1.5 4.5 4.5"/></svg>',
   gear:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 };
@@ -693,7 +694,7 @@ function renderList(hdr,main,bottom,kind){
     const p = progressOf(o);
     html += `<div class="progress"><div class="row"><span>${o.date?esc(fmtDate(o.date))+" · "+relDays(o.date):"ohne Datum"}</span><b>${p.d} / ${p.n}</b></div>
       <div class="bar"><div style="width:${p.p}%"></div></div>${sharedLine(o)}</div>
-      <div class="toggle"><span class="chip ${db.settings.hideDone?"on":""}" onclick="toggleHide()">Erledigte ausblenden</span></div>`;
+      <div class="toggle"><span class="chip ${db.settings.hideDone?"on":""}" onclick="toggleHide()">Erledigte ausblenden</span>${p.d?`<span class="chip" onclick="resetDone()">${I.reset.replace("<svg",'<svg class="ico"')} Alle wieder aktivieren</span>`:""}</div>`;
   } else {
     html += `${o.share?`<div class="progress">${sharedLine(o)}</div>`:""}<p class="hint">Änderungen hier wirken nur auf künftige Ereignisse.</p>
       <div class="toggle"><span class="chip on" onclick="newEventDialog('${o.id}')">＋ Ereignis aus dieser Vorlage</span></div>`;
@@ -749,6 +750,13 @@ function toggleItem(id){ const o=getObj("event"); const i=o.items.find(x=>x.id==
   const p=progressOf(o); if(i.done && p.d===p.n) toast("🎉 Alles gepackt!"); }
 function toggleEdit(){ editing=!editing; render(); }
 function toggleHide(){ db.settings.hideDone=!db.settings.hideDone; save(); render(); }
+// Alle Haken entfernen – mit „Rückgängig“ statt Nachfrage
+function resetDone(){
+  const o=getObj("event"); if(!o) return;
+  const was=o.items.filter(i=>i.done).map(i=>i.id); if(!was.length) return;
+  o.items.forEach(i=>i.done=false); save(); render();
+  undo(`${was.length} ${was.length===1?"Eintrag":"Einträge"} wieder aktiv`, ()=>{ const o2=getObj("event")||o; o2.items.forEach(i=>{ if(was.includes(i.id)) i.done=true; }); save(); render(); });
+}
 function delItem(kind,id){ const o=getObj(kind); const idx=o.items.findIndex(x=>x.id===id); const [rm]=o.items.splice(idx,1); save(); render();
   undo(`„${rm.text}“ gelöscht`, ()=>{ o.items.splice(idx,0,rm); save(); render(); }); }
 let undoFn=null;
@@ -777,26 +785,28 @@ function listMenu(kind){
   const o=getObj(kind), isEv=kind==="event";
   dialog(`<h2>${esc(o.name)}</h2><div class="menu">
     <button data-v="props">${I.edit}Name, Symbol${isEv?" & Datum":""} ändern</button>
-    ${isEv?`<button data-v="reset">${I.reset}Alle Haken entfernen</button>
+    ${isEv?`<button data-v="reset">${I.reset}Alle wieder aktivieren</button>
             <button data-v="addtpl">${I.plus}Vorlage hinzufügen</button>
             <button data-v="totpl">${I.tpl}Als neue Vorlage speichern</button>
             <button data-v="updtpl">${I.sync}Vorlage „${esc(o.from||"")}“ aktualisieren</button>`
           :`<button data-v="newev">${I.cal}Ereignis aus dieser Vorlage</button>
             <button data-v="dup">${I.copy}Vorlage duplizieren</button>`}
     <button data-v="collab">${I.people}${o.share?"Gemeinsame Liste – einladen":"Gemeinsam bearbeiten"}</button>
+    ${isEv?`<button data-v="kid">${I.kid}Kind hinzufügen</button>`:""}
     <button data-v="paste">${I.paste}Einträge aus Text einfügen</button>
     <button data-v="share">${I.upload}Als Datei teilen / exportieren</button>
     <button data-v="del" class="red">${I.trash}${isEv?"Ereignis":"Vorlage"} löschen</button>
   </div><div class="actions"><button class="btn" data-v="">Schließen</button></div>`,
   v=>{
     if(v==="props") propsDialog(kind,o);
-    if(v==="reset"){ o.items.forEach(i=>i.done=false); save(); render(); toast("Alle Haken entfernt"); }
+    if(v==="reset") resetDone();
     if(v==="addtpl") addTemplatesDialog(o);
     if(v==="totpl") saveAsTemplate(o);
     if(v==="updtpl") updateSourceTemplate(o);
     if(v==="newev") newEventDialog(o.id);
     if(v==="collab") startSharing(o);
     if(v==="paste") pasteItemsDialog(kind);
+    if(v==="kid") addKidDialog(o);
     if(v==="dup"){ const c=structuredClone(o); delete c.share; c.id=uid(); c.name+=" (Kopie)"; c.items.forEach(i=>i.id=uid()); db.templates.push(c); save(); go({name:"template",id:c.id}); }
     if(v==="share") exportOne(kind,o);
     if(v==="del") confirmDlg(`„${o.name}“ löschen?`, o.share?"Die Liste verschwindet nur bei dir. Wer sie mit dir teilt, behält sie.":"Das lässt sich nicht rückgängig machen.", "Löschen", ()=>{
@@ -836,10 +846,73 @@ function tplPicker(pre){
     <span class="sub" style="color:var(--muted);font-size:.8rem">${t.items.length}</span></label>`).join("")
   : `<p class="hint">Keine Vorlagen vorhanden – es wird eine leere Liste angelegt.</p>`;
 }
+/* ---------- Mehrere Kinder ----------
+   Vorlagen haben ein „Kind“. In einer Packliste werden die Kind-Kategorien pro Kind angelegt
+   („Kind – Badzeug“ → „Kind 1 – Badzeug“, „Kind 2 – Badzeug“); die Ausstattung teilen sich alle. */
+const KID_SHARED = ["Kind – Ausstattung"];
+const isKidCat = c => (c==="Kind" || /^Kind – /.test(c)) && !KID_SHARED.includes(c);
+const kidCat = (c, name) => c==="Kind" ? name : name + c.slice(4);          // „Kind – X“ → „Name – X“
+const ofKid = (c, name) => c===name || c.startsWith(name+" – ");
+function parseKids(raw){
+  raw = String(raw||"").trim();
+  if(!raw || raw==="1") return [];
+  if(/^\d+$/.test(raw)){ const n = Math.min(+raw, 9); return n<2 ? [] : Array.from({length:n},(_,i)=>"Kind "+(i+1)); }
+  const names = [...new Set(raw.split(/\s*[,;]\s*/).map(x=>x.trim()).filter(Boolean))].slice(0,9);
+  return names;
+}
+// Kind-Einträge pro Kind vervielfältigen; Reihenfolge: alle Kategorien von Kind 1, dann Kind 2 …
+function expandKids(items, kids, withDone){
+  if(!kids.length) return items;
+  const cats = []; items.forEach(i=>{ const c=i.cat||"Sonstiges"; if(!cats.includes(c)) cats.push(c); });
+  const kidCats = cats.filter(isKidCat), out = []; let done = false;
+  cats.forEach(c=>{
+    if(!isKidCat(c)){ items.filter(i=>(i.cat||"Sonstiges")===c).forEach(i=>out.push(i)); return; }
+    if(done) return; done = true;
+    kids.forEach(k=>kidCats.forEach(kc=>items.filter(i=>(i.cat||"Sonstiges")===kc)
+      .forEach(i=>out.push({id:uid(), text:i.text, cat:kidCat(kc,k), ...(withDone?{done:false}:{})}))));
+  });
+  return out;
+}
+// Für Vorlagen zurück auf ein „Kind“: Kategorien des ersten Kindes umbenennen, die der weiteren weglassen
+function collapseKids(items, kids){
+  if(!kids || !kids.length) return items;
+  const first = kids[0];
+  return items.filter(i=>!kids.slice(1).some(k=>ofKid(i.cat||"",k)))
+    .map(i=>ofKid(i.cat||"",first) ? {...i, cat: i.cat===first ? "Kind" : "Kind"+i.cat.slice(first.length)} : i);
+}
+function addKidDialog(ev){
+  const kids = ev.kids||[], hasKidCats = ev.items.some(i=>isKidCat(i.cat||""));
+  if(!kids.length && !hasKidCats){ toast("Diese Liste hat keine Kind-Kategorien"); return; }
+  const next = kids.length ? "Kind "+(kids.length+1) : "Kind 2";
+  dialog(`<h2>Kind hinzufügen</h2>
+    <p class="hint" style="margin:0">Die Kind-Einträge werden für ein weiteres Kind angelegt. Die Ausstattung bleibt gemeinsam.</p>
+    ${kids.length?"":`<label class="f" for="kOld">Bisheriges Kind heißt</label><input type="text" id="kOld" value="Kind 1">`}
+    <label class="f" for="kNew">Neues Kind heißt</label><input type="text" id="kNew" value="${esc(next)}">
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Hinzufügen</button></div>`,
+  v=>{
+    if(v!=="ok") return;
+    const o = getObj("event")||ev, nm = $("#kNew").value.trim(); if(!nm) return;
+    let list = o.kids||[];
+    if(!list.length){
+      const old = ($("#kOld").value.trim()||"Kind 1");
+      o.items.forEach(i=>{ if(isKidCat(i.cat||"")) i.cat = kidCat(i.cat, old); });
+      list = [old];
+    }
+    if(list.includes(nm)){ toast("Dieses Kind gibt es schon"); return; }
+    const src = list[0], copy = [];
+    const cats = []; o.items.forEach(i=>{ if(ofKid(i.cat||"",src) && !cats.includes(i.cat)) cats.push(i.cat); });
+    cats.forEach(c=>o.items.filter(i=>i.cat===c).forEach(i=>copy.push({id:uid(), text:i.text, cat: c===src ? nm : nm + c.slice(src.length), done:false})));
+    const at = o.items.map(i=>list.some(k=>ofKid(i.cat||"",k))).lastIndexOf(true);
+    o.items.splice(at+1, 0, ...copy);
+    o.kids = [...list, nm]; save(); render(); toast(`${copy.length} Einträge für ${nm} angelegt`);
+  });
+}
+
 function newEventDialog(preTpl){
   dialog(`<h2>Neues Ereignis</h2>
     <label class="f">Name</label><input type="text" id="nName" placeholder="z. B. Ostsee 2027">
     <label class="f">Datum (optional)</label><input type="date" id="nDate">
+    <label class="f" for="nKids">Kinder: Anzahl oder Namen</label><input type="text" id="nKids" value="1" placeholder="z. B. 2 oder Groß, Klein" autocomplete="off">
     <label class="f">Vorlagen (mehrere möglich, keine = leere Liste)</label>
     <div id="tplSel">${tplPicker(preTpl)}</div>
     <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Anlegen</button></div>`,
@@ -852,6 +925,9 @@ function newEventDialog(preTpl){
     const ev={id:uid(), name, date:$("#nDate").value, icon:tpls[0]?.icon||"🧳",
       from: tpls.length===1?tpls[0].name:"", items:[]};
     tpls.forEach(t=>mergeItems(ev.items,t.items,true));
+    const kids = parseKids($("#nKids").value);
+    if(kids.length===1){ ev.items.forEach(i=>{ if(isKidCat(i.cat||"")) i.cat = kidCat(i.cat, kids[0]); }); ev.kids = kids; }
+    else if(kids.length){ ev.items = expandKids(ev.items, kids, true); ev.kids = kids; }
     db.events.push(ev); save();
     if(view.name!=="event") go({name:"event",id:ev.id}); else { view={name:"event",id:ev.id}; render(); }
     toast(tpls.length?"Liste aus Vorlage erstellt – jetzt anpassen":"Leere Liste angelegt");
@@ -863,19 +939,24 @@ function addTemplatesDialog(ev){
     <div id="tplSel">${tplPicker()}</div>
     <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Hinzufügen</button></div>`,
   v=>{ if(v!=="ok") return; const before=ev.items.length;
-    [...document.querySelectorAll("#tplSel input:checked")].forEach(x=>mergeItems(ev.items, db.templates.find(t=>t.id===x.value).items, true));
+    [...document.querySelectorAll("#tplSel input:checked")].forEach(x=>{
+      let its = db.templates.find(t=>t.id===x.value).items;
+      if(ev.kids && ev.kids.length===1) its = its.map(i=>isKidCat(i.cat||"") ? {...i, cat:kidCat(i.cat, ev.kids[0])} : i);
+      else if(ev.kids && ev.kids.length) its = expandKids(its, ev.kids, false);
+      mergeItems(ev.items, its, true);
+    });
     save(); render(); toast(`${ev.items.length-before} Einträge hinzugefügt`); });
 }
 function saveAsTemplate(ev){
   ask("Als Vorlage speichern", ev.name, "Name der Vorlage", name=>{
-    db.templates.push({id:uid(), name, icon:ev.icon||"📦", items:ev.items.map(i=>({id:uid(),text:i.text,cat:i.cat}))});
+    db.templates.push({id:uid(), name, icon:ev.icon||"📦", items:collapseKids(ev.items, ev.kids).map(i=>({id:uid(),text:i.text,cat:i.cat}))});
     save(); toast("Als Vorlage gespeichert");
   });
 }
 function updateSourceTemplate(ev){
   const t=db.templates.find(x=>x.name===ev.from); if(!t) return;
   confirmDlg(`Vorlage „${t.name}“ aktualisieren?`, "Die Einträge der Vorlage werden durch die Einträge dieser Liste ersetzt.", "Aktualisieren", ()=>{
-    t.items = ev.items.map(i=>({id:uid(),text:i.text,cat:i.cat})); save(); toast("Vorlage aktualisiert"); });
+    t.items = collapseKids(ev.items, ev.kids).map(i=>({id:uid(),text:i.text,cat:i.cat})); save(); toast("Vorlage aktualisiert"); });
 }
 // Liest Listen wie „Badzeug“ + „- Zahnpasta“ oder „Kategorie: Eintrag“
 function parseItemsText(txt, cat){
@@ -1007,20 +1088,21 @@ function ssave(o, m){ lsSet("sync." + o.id, m); }
 /* Einträge als Datensätze: gleiche Form auf allen Geräten */
 function norm(id, r){
   return id === "__p"
-    ? {kind: r.kind === "template" ? "template" : "event", name: String(r.name || ""), icon: String(r.icon || ""), date: String(r.date || "")}
+    ? {kind: r.kind === "template" ? "template" : "event", name: String(r.name || ""), icon: String(r.icon || ""), date: String(r.date || ""),
+       ...(Array.isArray(r.kids) && r.kids.length ? {kids: r.kids.map(String).slice(0,9)} : {})}
     : {text: String(r.text || ""), cat: String(r.cat || "Sonstiges"), done: !!r.done, o: +r.o || 0};
 }
 const sig = (id, r) => JSON.stringify(norm(id, r));
 function records(o){
   const isEv = kindOf(o) === "event";
-  const recs = {__p: norm("__p", {kind: isEv ? "event" : "template", name: o.name, icon: o.icon, date: isEv ? o.date : ""})};
+  const recs = {__p: norm("__p", {kind: isEv ? "event" : "template", name: o.name, icon: o.icon, date: isEv ? o.date : "", kids: isEv ? o.kids : null})};
   let max = 0; o.items.forEach(i=>{ if (typeof i.o === "number" && i.o > max) max = i.o; });
   o.items.forEach(i=>{ if (typeof i.o !== "number") i.o = ++max; recs[i.id] = norm(i.id, {...i, done: isEv && i.done}); });
   return recs;
 }
 function fromRecords(o, recs){
   const isEv = kindOf(o) === "event", p = recs.__p;
-  if (p){ if (p.name) o.name = p.name; if (p.icon) o.icon = p.icon; if (isEv) o.date = p.date || ""; }
+  if (p){ if (p.name) o.name = p.name; if (p.icon) o.icon = p.icon; if (isEv){ o.date = p.date || ""; if (p.kids) o.kids = p.kids; else delete o.kids; } }
   o.items = Object.entries(recs).filter(([id])=>id !== "__p").sort((a, b)=>a[1].o - b[1].o)
     .map(([id, r])=>({id, text: r.text, cat: r.cat, o: r.o, ...(isEv ? {done: !!r.done} : {})}));
 }
