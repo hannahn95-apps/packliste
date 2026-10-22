@@ -105,6 +105,10 @@ dialog input[type=text],dialog input[type=date],dialog select,dialog textarea{wi
   text-align:left;cursor:pointer;border-radius:10px}
 .menu button:active{background:var(--line)}
 .menu button.red{color:var(--danger)}
+.menu button svg{width:20px;height:20px;flex:none;color:var(--muted);stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.menu button.red svg{color:var(--danger)}
+.ico{width:14px;height:14px;vertical-align:-2px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.shared svg{stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .emojis{display:flex;flex-wrap:wrap;gap:6px}
 .emojis button{font-size:1.4rem;width:44px;height:44px;border-radius:10px;border:2px solid transparent;background:var(--bg);cursor:pointer}
 .emojis button.on{border-color:var(--accent)}
@@ -151,6 +155,11 @@ const I = {
   done:'<svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>',
   cal:'<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
   tpl:'<svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  reset:'<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8"/><path d="M3 3v5h5"/></svg>',
+  sync:'<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.9L3 9"/><path d="M3 4v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L21 15"/><path d="M21 20v-5h-5"/></svg>',
+  copy:'<svg viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>',
+  paste:'<svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>',
+  upload:'<svg viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>',
   people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.4 0 4.1 1.5 4.5 4.5"/></svg>',
   gear:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 };
@@ -183,16 +192,24 @@ function familyTemplates(){
       ...mk("Kind",["Wasserflasche Kind","Schneeanzug","Wintermütze","Handschuhe Kind","Winterschuhe","Fußsack / Decke","Wind- und Wettercreme","Snacks","Windeln und co","Wechselzeug"])
     ]},
     {id:uid(), name:"Ultimative Reiseliste", icon:"✈️", items:[
-      ...mk("Küchenutensilien",["Messer","Clips","Ziplock bags","Salz","Tupperdose","Geschirrhandtuch","Müllbeutel","Teller","Schälchen","Zewa","Spüli","Schwamm","Spülmaschinentabs"]),
       ...mk("Badzeug",["2x Sonnencreme","Bite away","Autan","Allesseife","Ibuprofen","Taschentücher (mehrere Pack)","Nagelpfeile","Nagelschere","Zahnpasta","Zahnbürsten","Bürste","Schminke","Shampoo","Tampons","Haargummis","Deo","Gesichtswaschzeug","Gesichtscreme","Handcreme"]),
-      ...mk("Kleidung Mutter",["Sonnenshirt","Sonnenhut","Birkenstock","Kleider","Rock","Unterwäsche","Socken","BH","Bikini","Reisehandtuch","Wäschenetz","Jeans","Jogginghose","Tshirts","Pullover","Schlafsachen"]),
       ...mk("Kleidung Vater",["NoSeaLife Hosen"]),
-      ...mk("Sonstiges",["Bauchtasche","Adapter","Kindl","Buch","Ladekabel","Stifte","Wasserflasche","Spiele (Cabo, Doppelkopf...)","3x Reisepass","Portmonnaie","Bargeld","Kreditkarten","Kamera","Sonnenbrillending Vater","Kopfhörer","Snacks"]),
+      ...mk("Sonstiges",["Bauchtasche","Adapter","Kindl","Buch","Ladekabel","Stifte","Wasserflasche","Spiele (Cabo, Doppelkopf...)","3x Reisepass","Portmonnaie","Bargeld","Kreditkarten","Kamera","Sonnenbrillending Vater","Kopfhörer","Snacks"])
+    ]},
+    {id:uid(), name:"Ultimative Küchenliste", icon:"🍳", items:[
+      ...mk("Küchenutensilien",["Messer","Clips","Ziplock bags","Salz","Tupperdose","Geschirrhandtuch","Müllbeutel","Teller","Schälchen","Zewa","Spüli","Schwamm","Spülmaschinentabs"])
+    ]},
+    {id:uid(), name:"Ultimative Liste Mutter", icon:"👗", items:[
+      ...mk("Kleidung Mutter",["Sonnenshirt","Sonnenhut","Birkenstock","Kleider","Rock","Unterwäsche","Socken","BH","Bikini","Reisehandtuch","Wäschenetz","Jeans","Jogginghose","Tshirts","Pullover","Schlafsachen"])
+    ]},
+    {id:uid(), name:"Ultimative Kinderliste", icon:"🧸", items:[
       ...mk("Kind – Kleidung",["Body","Sonnenhut","Sonnenshirt","Wintermütze","Schlafsack","Schlafanzug","Decke","Jacke","Schuhe","Hausschuhe","Anzug","Handschuhe","Regensachen","Socken","Hosen","Strumpfhosen","Tshirts","Kleider?","Handtuch"]),
       ...mk("Kind – Badzeug",["Zinksalbe","Windeln","Feuchttücher (1 normales Pack und das Pack mit dem guten Verschluss)","Vitamin D Tabletten","Fiebersenker","Zahnbürste","Zahnpasta","Schnuller","Fieberthermometer","2-3x Sonnencreme","Schwimmwindeln","Wickelunterlagen"]),
       ...mk("Kind – Küchenzeug",["Lätzchen","Löffel","Abendessen","Haferflocken","Mittagsgläschen","Tüten Snacks","Wasserflasche","Nuk Becher","Tücher zum Saubermachen"]),
       ...mk("Kind – Spielzeug",["Bücher","Puppe","Stapelbecher"]),
-      ...mk("Kind – Sonstiges",["Leuchtkugel","Sonnenschutz Buggy","Kindersitz für Stuhl","Buggy","Trage","Babyfon"]),
+      ...mk("Kind – Sonstiges",["Leuchtkugel","Sonnenschutz Buggy","Kindersitz für Stuhl","Buggy","Trage","Babyfon"])
+    ]},
+    {id:uid(), name:"Ultimative Hundeliste", icon:"🐶", items:[
       ...mk("Scotty",["Futter","Näpfe","Reisepass","Leinen","Leuchthalsband","Kacktüten","Ball","Körbchen","Kühlmatte","Wintermantel"])
     ]}
   ];
@@ -207,23 +224,46 @@ function renamePeople(t){
   if(RENAME[t]) return RENAME[t];
   return t.replace(/^Tessa(?= – |$)/,"Kind").replace(/ Tessa$/," Kind");
 }
+// Version 4: „Ultimative Reiseliste“ in eigene Vorlagen aufteilen (eigene Änderungen bleiben erhalten)
+const ULTIMATE_SPLIT = [
+  {name:"Ultimative Küchenliste", icon:"🍳", test:c=>c==="Küchenutensilien"},
+  {name:"Ultimative Liste Mutter", icon:"👗", test:c=>c==="Kleidung Mutter"},
+  {name:"Ultimative Kinderliste", icon:"🧸", test:c=>/^Kind( – |$)/.test(c)},
+  {name:"Ultimative Hundeliste", icon:"🐶", test:c=>c==="Scotty"}
+];
+function splitUltimate(){
+  const t = db.templates.find(x=>x.name==="Ultimative Reiseliste");
+  if(!t || t.share) return;                       // gemeinsame Vorlage nicht umbauen
+  let at = db.templates.indexOf(t);
+  ULTIMATE_SPLIT.forEach(g=>{
+    const moved = t.items.filter(i=>g.test(i.cat||"Sonstiges"));
+    if(!moved.length) return;
+    t.items = t.items.filter(i=>!moved.includes(i));
+    const ex = db.templates.find(x=>x.name===g.name);
+    if(ex){ mergeItems(ex.items, moved, false); return; }
+    db.templates.splice(++at, 0, {id:uid(), name:g.name, icon:g.icon, items:moved.map(i=>({id:uid(), text:i.text, cat:i.cat}))});
+  });
+}
 function upgradeTemplates(){
   const v = db.tplVersion||1;
-  if(v >= 3) return;
-  if(v >= 2){
+  if(v >= 4) return;
+  if(v < 2){
+    db.templates = db.templates.filter(t => t.share || OLD_EXAMPLES[t.name] !== t.items.map(i=>i.text).join("|"));
+    const have = new Set(db.templates.map(t=>t.name));
+    db.templates.unshift(...familyTemplates().filter(t=>!have.has(t.name)));
+    db.events.concat(db.templates).forEach(o=>o.items.forEach(i=>{ i.cat=renamePeople(i.cat||"Sonstiges"); i.text=renamePeople(i.text); }));
+    db.tplVersion = 4; return;
+  }
+  if(v < 3){
     // Version 3: Namen → Mutter / Vater / Kind, neue Herbst- und Winter-Vorlage
     db.events.concat(db.templates).forEach(o=>o.items.forEach(i=>{ i.cat=renamePeople(i.cat||"Sonstiges"); i.text=renamePeople(i.text); }));
     const have = new Set(db.templates.map(t=>t.name));
     const add = familyTemplates().filter(t=>["Im Herbst einpacken","Im Winter einpacken"].includes(t.name) && !have.has(t.name));
     const at = db.templates.findIndex(t=>t.name==="Im Sommer immer einpacken");
     db.templates.splice(at<0?db.templates.length:at+1, 0, ...add);
-    db.tplVersion = 3; return;
   }
-  db.templates = db.templates.filter(t => t.share || OLD_EXAMPLES[t.name] !== t.items.map(i=>i.text).join("|"));
-  const have = new Set(db.templates.map(t=>t.name));
-  db.templates.unshift(...familyTemplates().filter(t=>!have.has(t.name)));
-  db.events.concat(db.templates).forEach(o=>o.items.forEach(i=>{ i.cat=renamePeople(i.cat||"Sonstiges"); i.text=renamePeople(i.text); }));
-  db.tplVersion = 3;
+  splitUltimate();
+  db.tplVersion = 4;
 }
 function defaultData(){
   return {
@@ -244,7 +284,7 @@ function defaultData(){
       ]}
     ],
     events:[],
-    tplVersion:3
+    tplVersion:4
   };
 }
 let db;
@@ -331,7 +371,7 @@ function renderEvents(hdr,main,bottom){
       <div class="emoji">${esc(e.icon||"🧳")}</div>
       <div class="body">
         <div class="title">${esc(e.name)}</div>
-        <div class="sub">${e.share?"👥 ":""}${e.date?esc(fmtDate(e.date))+" · "+relDays(e.date):"ohne Datum"} · ${p.d}/${p.n} gepackt</div>
+        <div class="sub">${e.share?I.people.replace("<svg",'<svg class="ico"')+" ":""}${e.date?esc(fmtDate(e.date))+" · "+relDays(e.date):"ohne Datum"} · ${p.d}/${p.n} gepackt</div>
         <div class="bar"><div style="width:${p.p}%"></div></div>
       </div></div>`; };
   if(!db.events.length){
@@ -350,7 +390,7 @@ function renderTemplates(hdr,main,bottom){
     <div class="card" onclick="go({name:'template',id:'${t.id}'})">
       <div class="emoji">${esc(t.icon||"📦")}</div>
       <div class="body"><div class="title">${esc(t.name)}</div>
-      <div class="sub">${t.share?"👥 gemeinsam · ":""}${t.items.length} Einträge · ${cats(t.items).length} Kategorien</div></div>
+      <div class="sub">${t.share?I.people.replace("<svg",'<svg class="ico"')+" gemeinsam · ":""}${t.items.length} Einträge · ${cats(t.items).length} Kategorien</div></div>
     </div>`).join("") : `<div class="empty"><div class="big">📋</div>Noch keine Vorlagen.</div>`);
   bottom.innerHTML = `<button class="fab" onclick="newTemplateDialog()" aria-label="Neue Vorlage">${I.plus}</button>` + navBar("templates");
 }
@@ -469,17 +509,17 @@ function editItem(kind,id){
 function listMenu(kind){
   const o=getObj(kind), isEv=kind==="event";
   dialog(`<h2>${esc(o.name)}</h2><div class="menu">
-    <button data-v="props">✏️ Name, Symbol${isEv?" & Datum":""} ändern</button>
-    ${isEv?`<button data-v="reset">↺ Alle Haken entfernen</button>
-            <button data-v="addtpl">➕ Vorlage hinzufügen</button>
-            <button data-v="totpl">📋 Als neue Vorlage speichern</button>
-            <button data-v="updtpl">🔄 Vorlage „${esc(o.from||"")}“ aktualisieren</button>`
-          :`<button data-v="newev">🧳 Ereignis aus dieser Vorlage</button>
-            <button data-v="dup">⧉ Vorlage duplizieren</button>`}
-    <button data-v="collab">👥 ${o.share?"Gemeinsame Liste – einladen":"Gemeinsam bearbeiten"}</button>
-    <button data-v="paste">📋 Einträge aus Text einfügen</button>
-    <button data-v="share">📤 Als Datei teilen / exportieren</button>
-    <button data-v="del" class="red">🗑 ${isEv?"Ereignis":"Vorlage"} löschen</button>
+    <button data-v="props">${I.edit}Name, Symbol${isEv?" & Datum":""} ändern</button>
+    ${isEv?`<button data-v="reset">${I.reset}Alle Haken entfernen</button>
+            <button data-v="addtpl">${I.plus}Vorlage hinzufügen</button>
+            <button data-v="totpl">${I.tpl}Als neue Vorlage speichern</button>
+            <button data-v="updtpl">${I.sync}Vorlage „${esc(o.from||"")}“ aktualisieren</button>`
+          :`<button data-v="newev">${I.cal}Ereignis aus dieser Vorlage</button>
+            <button data-v="dup">${I.copy}Vorlage duplizieren</button>`}
+    <button data-v="collab">${I.people}${o.share?"Gemeinsame Liste – einladen":"Gemeinsam bearbeiten"}</button>
+    <button data-v="paste">${I.paste}Einträge aus Text einfügen</button>
+    <button data-v="share">${I.upload}Als Datei teilen / exportieren</button>
+    <button data-v="del" class="red">${I.trash}${isEv?"Ereignis":"Vorlage"} löschen</button>
   </div><div class="actions"><button class="btn" data-v="">Schließen</button></div>`,
   v=>{
     if(v==="props") propsDialog(kind,o);
