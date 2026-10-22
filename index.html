@@ -784,7 +784,7 @@ function editItem(kind,id){
 function listMenu(kind){
   const o=getObj(kind), isEv=kind==="event";
   dialog(`<h2>${esc(o.name)}</h2><div class="menu">
-    <button data-v="props">${I.edit}Name, Symbol${isEv?" & Datum":""} ändern</button>
+    <button data-v="props">${I.edit}Name, Symbol${isEv?(o.kids&&o.kids.length?", Datum & Kinder":" & Datum"):""} ändern</button>
     ${isEv?`<button data-v="reset">${I.reset}Alle wieder aktivieren</button>
             <button data-v="addtpl">${I.plus}Vorlage hinzufügen</button>
             <button data-v="totpl">${I.tpl}Als neue Vorlage speichern</button>
@@ -826,9 +826,28 @@ function propsDialog(kind,o){
   dialog(`<h2>${isEv?"Ereignis":"Vorlage"} bearbeiten</h2>
     <label class="f">Name</label><input type="text" id="pName" value="${esc(o.name)}">
     ${isEv?`<label class="f">Datum</label><input type="date" id="pDate" value="${esc(o.date||"")}">`:""}
+    ${isEv && o.kids && o.kids.length ? `<label class="f">Kinder</label>${o.kids.map((k,i)=>`<input type="text" id="pKid${i}" value="${esc(k)}" style="margin-bottom:6px" aria-label="Name Kind ${i+1}">`).join("")}` : ""}
     <label class="f">Symbol</label>${emojiPicker(o.icon)}
     <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Speichern</button></div>`,
-  v=>{ if(v!=="ok") return; const n=$("#pName").value.trim(); if(n) o.name=n; if(isEv) o.date=$("#pDate").value; o.icon=chosenEmoji(o.icon); save(); render(); });
+  v=>{
+    if(v!=="ok") return;
+    const o2 = getObj(kind) || o;
+    if(isEv && o2.kids && o2.kids.length){
+      const names = o2.kids.map((k,i)=>($("#pKid"+i)?.value||"").trim() || k);
+      if(new Set(names).size !== names.length){ toast("Jedes Kind braucht einen eigenen Namen"); return; }
+      renameKids(o2, names);
+    }
+    const n=$("#pName").value.trim(); if(n) o2.name=n; if(isEv) o2.date=$("#pDate").value; o2.icon=chosenEmoji(o2.icon); save(); render();
+  });
+}
+// Kinder umbenennen: Kategorien „Alt – X“ → „Neu – X“ (über Zwischennamen, damit Tausch „A↔B“ funktioniert)
+function renameKids(o, names){
+  const old = o.kids; if(!old || old.length !== names.length) return;
+  if(old.every((k,i)=>k===names[i])) return;
+  const tmp = old.map((_,i)=>"\u0000"+i);
+  o.items.forEach(it=>{ const i = old.findIndex(k=>ofKid(it.cat||"",k)); if(i>=0) it.cat = tmp[i] + it.cat.slice(old[i].length); });
+  o.items.forEach(it=>{ const m = /^\u0000(\d+)/.exec(it.cat||""); if(m) it.cat = names[+m[1]] + it.cat.slice(m[0].length); });
+  o.kids = names;
 }
 
 /* ---------- Ereignis anlegen ---------- */
