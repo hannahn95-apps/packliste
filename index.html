@@ -116,6 +116,9 @@ dialog input[type=text],dialog input[type=date],dialog select,dialog textarea{wi
 .hit{background:var(--accent-soft);color:var(--text);border-radius:8px;padding:2px 8px;font-size:.82rem}
 .hit small{color:var(--muted);font-size:.72rem}
 .hit.more{background:transparent;color:var(--muted);padding-left:2px}
+.hit.done{color:var(--muted);text-decoration:line-through}
+.hit.done .ico{color:var(--accent);text-decoration:none}
+.card .hits + .bar{margin-top:8px}
 mark{background:transparent;color:var(--accent);font-weight:700}
 .menu button svg{width:20px;height:20px;flex:none;color:var(--muted);stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .menu button.red svg{color:var(--danger)}
@@ -177,7 +180,7 @@ const I = {
   people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.4 0 4.1 1.5 4.5 4.5"/></svg>',
   gear:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 };
-const EMOJIS = ["🧳","☀️","🏖️","⛷️","❄️","👶","👵","🏕️","🚗","✈️","🚆","🏨","🎒","🏊","🥾","🎄","🎂","🏥","🐶","📦"];
+const EMOJIS = ["🧳","☀️","🏖️","⛷️","❄️","👶","👵","🏕️","🚗","✈️","🚆","🏨","🎒","🏊","🥾","🎄","🎂","🏥","🐶","♨️","📦"];
 
 /* ---------- Daten ---------- */
 const KEY = "packliste.v1";
@@ -185,6 +188,7 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7
 const mk = (cat, list) => list.map(t => ({id:uid(), text:t, cat}));
 
 const VATER = ["Kleidung","Schuhe","Jacke","Haarzeug","Zahnbürste"];
+const THERME = ["Handtücher","Bademantel","Saunalaken","2x Shampoo","Badeanzug","Badehose","Schwimmbrille","Kopfhörer","Buch","Äpfel","Anderes Essen","Wasserflasche","Badelatschen","Kuschelsocken","Frische Unterwäsche"];
 const MUTTER_SOMMER = ["Sonnenshirt","Sonnenhut","Birkenstock","Bikini"];
 const MUTTER_WINTER = ["Handschuhe","Mütze","Winterjacke","Schal","Skihose","Dicke Socken","Winterschuhe","Thermounterwäsche"];
 const KIND_SOMMER = ["Sonnenhut","Sonnenshirt"], KIND_WINTER = ["Wintermütze","Anzug","Handschuhe"];
@@ -250,6 +254,7 @@ function familyTemplates(){
     {id:uid(), name:"Ultimative Badliste", icon:"🧴", items:[
       ...mk("Badzeug",["2x Sonnencreme","Bite away","Autan","Allesseife","Kopfschmerztabletten","Taschentücher (mehrere Pack)","Nagelpfeile","Nagelschere","Zahnpasta","Zahnbürsten","Bürste","Schminke","Shampoo","Tampons","Haargummis","Deo","Gesichtswaschzeug","Gesichtscreme","Handcreme","Pille","Pflaster","Desinfektionsspray","Nasenspray"])
     ]},
+    {id:uid(), name:"Therme", icon:"♨️", items:mk("Therme",THERME)},
     {id:uid(), name:"Ultimative Liste Sonstiges", icon:"🎒", items:[
       ...mk("Für uns",["Bauchtasche","Adapter","Kindl","Buch","Ladekabel","Stifte","Wasserflasche","Spiele (Cabo, Doppelkopf...)","3x Reisepass","Portmonnaie","Bargeld","Kreditkarten","Kamera","Sonnenbrillending Vater","Kopfhörer","Snacks","Krankenversicherungskarte"])
     ]}
@@ -440,16 +445,20 @@ function upgradeV10(){
     else t.items.splice(at+1, 0, ...add);
   });
 }
+// Version 11: neue Vorlage „Therme“
+function upgradeV11(){
+  if(!db.templates.some(t=>t.name==="Therme")) db.templates.push({id:uid(), name:"Therme", icon:"♨️", items:mk("Therme",THERME)});
+}
 function upgradeTemplates(){
   const v = db.tplVersion||1;
-  if(v >= 10) return;
+  if(v >= 11) return;
   if(v < 2){
     db.templates = db.templates.filter(t => t.share || OLD_EXAMPLES[t.name] !== t.items.map(i=>i.text).join("|"));
     const have = new Set(db.templates.map(t=>t.name));
     db.templates.unshift(...familyTemplates().filter(t=>!have.has(t.name)));
     db.events.concat(db.templates).forEach(o=>o.items.forEach(i=>{ i.cat=renamePeople(i.cat||"Sonstiges"); i.text=renamePeople(i.text); }));
     db.templates = db.templates.filter(t => t.share || !["Besuch bei den Großeltern","Urlaub Winter"].includes(t.name));
-    db.tplVersion = 10; return;
+    db.tplVersion = 11; return;
   }
   if(v < 3){
     // Version 3: Namen → Mutter / Vater / Kind, neue Herbst- und Winter-Vorlage
@@ -465,8 +474,9 @@ function upgradeTemplates(){
   if(v < 7) upgradeV7();
   if(v < 8) upgradeV8();
   if(v < 9) upgradeV9();
-  upgradeV10();
-  db.tplVersion = 10;
+  if(v < 10) upgradeV10();
+  upgradeV11();
+  db.tplVersion = 11;
 }
 function defaultData(){
   return {
@@ -474,7 +484,7 @@ function defaultData(){
       ...familyTemplates()
     ],
     events:[],
-    tplVersion:10
+    tplVersion:11
   };
 }
 let db;
@@ -550,27 +560,62 @@ function navBar(active){
 }
 function progressOf(e){ const n=e.items.length, d=e.items.filter(i=>i.done).length; return {n,d,p:n?Math.round(d/n*100):0}; }
 
+let evQuery = "";
+// Suchfeld oben in einer Übersicht; die Liste darunter wird beim Tippen neu gezeichnet, das Feld bleibt stehen
+function searchBox(id, value, placeholder){
+  return `<div class="search">${I.search}
+      <input type="search" id="${id}" placeholder="${esc(placeholder)}" autocomplete="off" enterkeyhint="search" value="${esc(value)}" aria-label="${esc(placeholder)}">
+      <button class="iconbtn" id="${id}Clear" aria-label="Suche leeren" ${value?"":"hidden"}>${I.x}</button>
+    </div>`;
+}
+function wireSearch(id, set, redraw){
+  const inp = $("#"+id), clr = $("#"+id+"Clear"); if(!inp) return;
+  const update = v => { set(v); clr.hidden = !v; redraw(); };
+  inp.addEventListener("input", ()=>update(inp.value));
+  inp.addEventListener("keydown", e=>{ if(e.key==="Escape"){ inp.value=""; update(""); } });
+  clr.addEventListener("click", ()=>{ inp.value=""; update(""); inp.focus(); });
+}
 function renderEvents(hdr,main,bottom){
   hdr.innerHTML = `<h1>Packliste</h1><button class="iconbtn" onclick="joinDialog()" aria-label="Gemeinsamer Liste beitreten" title="Gemeinsamer Liste beitreten">${I.people}</button>`;
-  const t = today();
-  const sorted = [...db.events].sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
-  const upcoming = sorted.filter(e=>!e.date || e.date>=t);
-  const past = sorted.filter(e=>e.date && e.date<t).reverse();
-  const card = e => { const p=progressOf(e); return `
-    <div class="card" onclick="go({name:'event',id:'${e.id}'})">
-      <div class="emoji">${esc(e.icon||"🧳")}</div>
-      <div class="body">
-        <div class="title">${esc(e.name)}</div>
-        <div class="sub">${e.share?I.people.replace("<svg",'<svg class="ico"')+" ":""}${e.date?esc(fmtDate(e.date))+" · "+relDays(e.date):"ohne Datum"} · ${p.d}/${p.n} gepackt</div>
-        <div class="bar"><div style="width:${p.p}%"></div></div>
-      </div></div>`; };
   if(!db.events.length){
     main.innerHTML = `<div class="empty"><div class="big">🧳</div>Noch keine Ereignisse.<br>Tippe auf <b>+</b>, um eine Packliste für ein Ereignis anzulegen.</div>`;
   } else {
-    main.innerHTML = (upcoming.length?`<div class="section-title">Anstehend</div>`+upcoming.map(card).join(""):"")
-      + (past.length?`<div class="section-title">Vergangen</div>`+past.map(card).join(""):"");
+    main.innerHTML = searchBox("evSearch", evQuery, "Ereignisse und Einträge durchsuchen") + `<div id="evList"></div>`;
+    wireSearch("evSearch", v=>evQuery=v, renderEvList);
+    renderEvList();
   }
   bottom.innerHTML = `<button class="fab" onclick="newEventDialog()" aria-label="Neues Ereignis">${I.plus}</button>` + navBar("events");
+}
+function renderEvList(){
+  const box = $("#evList"); if(!box) return;
+  const q = fold(evQuery.trim()), t = today();
+  const sorted = [...db.events].sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
+  const hits = new Map();
+  if(q) sorted.forEach(e=>{
+    const longDate = e.date ? new Date(e.date+"T12:00:00").toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long",year:"numeric"}) : "";
+    const nameHit = fold(e.name).includes(q) || (e.date && (fold(fmtDate(e.date)).includes(q) || fold(longDate).includes(q)));
+    const items = e.items.filter(i=>fold(i.text).includes(q) || fold(i.cat).includes(q));
+    if(nameHit || items.length) hits.set(e.id, items);
+  });
+  const list = q ? sorted.filter(e=>hits.has(e.id)) : sorted;
+  const upcoming = list.filter(e=>!e.date || e.date>=t);
+  const past = list.filter(e=>e.date && e.date<t).reverse();
+  const card = e => { const p=progressOf(e), its=hits.get(e.id)||[];
+    const found = its.length ? `<div class="hits">${its.slice(0,6).map(i=>`<span class="hit${i.done?" done":""}">${i.done?I.check.replace("<svg",'<svg class="ico"')+" ":""}${hl(i.text,q)} <small>${hl(i.cat||"Sonstiges",q)}</small></span>`).join("")}${its.length>6?`<span class="hit more">+${its.length-6} weitere</span>`:""}</div>` : "";
+    return `
+    <div class="card" onclick="go({name:'event',id:'${e.id}'})">
+      <div class="emoji">${esc(e.icon||"🧳")}</div>
+      <div class="body">
+        <div class="title">${hl(e.name,q)}</div>
+        <div class="sub">${e.share?I.people.replace("<svg",'<svg class="ico"')+" ":""}${e.date?esc(fmtDate(e.date))+" · "+relDays(e.date):"ohne Datum"} · ${p.d}/${p.n} gepackt</div>
+        ${found}
+        <div class="bar"><div style="width:${p.p}%"></div></div>
+      </div></div>`; };
+  if(q && !list.length){ box.innerHTML = `<div class="empty"><div class="big">🔍</div>Nichts gefunden für „${esc(evQuery.trim())}“.</div>`; return; }
+  const n = q ? [...hits.values()].reduce((s,x)=>s+x.length,0) : 0;
+  box.innerHTML = (q ? `<p class="hint">${list.length} ${list.length===1?"Ereignis":"Ereignisse"}${n?`, ${n} ${n===1?"Eintrag":"Einträge"}`:""}</p>` : "")
+    + (upcoming.length?`<div class="section-title">Anstehend</div>`+upcoming.map(card).join(""):"")
+    + (past.length?`<div class="section-title">Vergangen</div>`+past.map(card).join(""):"");
 }
 
 let tplQuery = "";
@@ -583,15 +628,8 @@ function hl(text, q){
 }
 function renderTemplates(hdr,main,bottom){
   hdr.innerHTML = `<h1>Vorlagen</h1><button class="iconbtn" onclick="joinDialog()" aria-label="Gemeinsamer Liste beitreten" title="Gemeinsamer Liste beitreten">${I.people}</button>`;
-  main.innerHTML = `<div class="search">${I.search}
-      <input type="search" id="tplSearch" placeholder="Vorlagen und Einträge durchsuchen" autocomplete="off" enterkeyhint="search" value="${esc(tplQuery)}" aria-label="Vorlagen durchsuchen">
-      <button class="iconbtn" id="tplClear" aria-label="Suche leeren" ${tplQuery?"":"hidden"}>${I.x}</button>
-    </div>
-    <div id="tplList"></div>`;
-  const inp = $("#tplSearch");
-  inp.addEventListener("input", ()=>{ tplQuery = inp.value; $("#tplClear").hidden = !tplQuery; renderTplList(); });
-  inp.addEventListener("keydown", e=>{ if(e.key==="Escape"){ tplQuery=""; inp.value=""; $("#tplClear").hidden=true; renderTplList(); } });
-  $("#tplClear").addEventListener("click", ()=>{ tplQuery=""; inp.value=""; $("#tplClear").hidden=true; renderTplList(); inp.focus(); });
+  main.innerHTML = searchBox("tplSearch", tplQuery, "Vorlagen und Einträge durchsuchen") + `<div id="tplList"></div>`;
+  wireSearch("tplSearch", v=>tplQuery=v, renderTplList);
   renderTplList();
   bottom.innerHTML = `<button class="fab" onclick="newTemplateDialog()" aria-label="Neue Vorlage">${I.plus}</button>` + navBar("templates");
 }
