@@ -105,6 +105,18 @@ dialog input[type=text],dialog input[type=date],dialog select,dialog textarea{wi
   text-align:left;cursor:pointer;border-radius:10px}
 .menu button:active{background:var(--line)}
 .menu button.red{color:var(--danger)}
+.search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0 4px 0 12px;margin:2px 0 10px;box-shadow:var(--shadow)}
+.search:focus-within{border-color:var(--accent)}
+.search > svg{width:20px;height:20px;flex:none;color:var(--muted);stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.search input{flex:1;min-width:0;border:0;background:transparent;padding:12px 0;outline:none}
+.search input::-webkit-search-cancel-button{display:none}
+.search .iconbtn{width:36px;height:36px}
+.search .iconbtn svg{width:18px;height:18px}
+.hits{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:4px}
+.hit{background:var(--accent-soft);color:var(--text);border-radius:8px;padding:2px 8px;font-size:.82rem}
+.hit small{color:var(--muted);font-size:.72rem}
+.hit.more{background:transparent;color:var(--muted);padding-left:2px}
+mark{background:transparent;color:var(--accent);font-weight:700}
 .menu button svg{width:20px;height:20px;flex:none;color:var(--muted);stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .menu button.red svg{color:var(--danger)}
 .ico{width:14px;height:14px;vertical-align:-2px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -160,6 +172,8 @@ const I = {
   copy:'<svg viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>',
   paste:'<svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>',
   upload:'<svg viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>',
+  search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.4 0 4.1 1.5 4.5 4.5"/></svg>',
   gear:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 };
@@ -170,47 +184,74 @@ const KEY = "packliste.v1";
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const mk = (cat, list) => list.map(t => ({id:uid(), text:t, cat}));
 
+const VATER = ["Kleidung","Schuhe","Jacke","Haarzeug","Zahnbürste"];
+const MUTTER_SOMMER = ["Sonnenshirt","Sonnenhut","Birkenstock","Bikini"];
+const MUTTER_WINTER = ["Handschuhe","Mütze","Winterjacke","Schal","Skihose","Dicke Socken","Winterschuhe","Thermounterwäsche"];
+const KIND_SOMMER = ["Sonnenhut","Sonnenshirt"], KIND_WINTER = ["Wintermütze","Anzug","Handschuhe"];
+// Ergänzungen für die Kinderliste (u. a. aus „Reisen mit Baby/Kleinkind“)
+const KIND_ADD = {
+  "Kind – Kleidung Sommer": ["Sonnenbrille","Badesachen"],
+  "Kind – Kleidung Winter": ["Winterschuhe","Schal / Loop"],
+  "Kind – Kleidung allgemein": ["Mütze","Spucktücher"],
+  "Kind – Badzeug": ["Nasensauger"],
+  "Kind – Küchenzeug": ["Milch","Bananen"],
+  "Kind – Spielzeug": ["Kuscheltier"],
+  "Kind – Sonstiges": ["Regenschutz Buggy","Babyschalenadapter","Kumja","Kopfkissen","Insektennetz","Reisebett"]
+};
+const WICKELRUCKSACK = ["Wasserflasche Kind","Wasserflasche Erwachsener","Wechselkleidung","Sonnencreme","Snack Kind","Snack Erwachsener","Wickelunterlage","Windeln","Feuchttücher","Kopfschmerztabletten","Taschentücher","Spucktuch","Schnuller","Sonnenhut / Mütze"];
 function familyTemplates(){
+  const reisen = kleinkind => [
+    ...mk("Kind – Kleidung allgemein",["Bodys","Andere Anziehsachen",...(kleinkind?["Schuhe"]:[]),"Mütze","Schlafsack","Decke","Jacke","Spucktücher","Socken"]),
+    ...mk("Kind – Badzeug",["Zinksalbe","Windeln","Feuchttücher","Vitamin D","Fiebersenker","Nasensauger","Zahnbürste","Zahnpasta","Schnuller","Wickelunterlagen","Sonnencreme"]),
+    ...(kleinkind?mk("Kind – Küchenzeug",["Lätzchen","Löffel","Milch","Haferflocken","Bananen","Anderes Essen","Wasserflasche"]):[]),
+    ...mk("Kind – Ausstattung",["Kinderwagen","Regenschutz Kinderwagen","Babyschalenadapter","Trage","Kumja","Babyfon","Spielzeug","Leuchtkugel","Stillkissen",...(kleinkind?[]:["Nestchen"]),"Kopfkissen","Sonnensegel","Insektennetz"]),
+    ...mk("Für uns",["Wasserflasche","Kopfhörer","Portmonnaie","Ladekabel","Buch","Pille","Kleidung","Kopfschmerztabletten"])
+  ];
   return [
-    {id:uid(), name:"Reisen mit Baby (über Nacht)", icon:"👶", items:[
-      ...mk("Kleidung",["Body","Andere Anziehsachen","Schuhe","Mütze","Schlafsack","Decke","Jacke","Spucktücher"]),
-      ...mk("Pflege & Gesundheit",["Zinksalbe","Windeln","Feuchttücher","Vitamin D","Fiebersenker","Nasensauger","Zahnbürste","Zahnpasta","Schnuller"]),
-      ...mk("Essen",["Lätzchen","Löffel","Milch","Haferflocken","Bananen","Essen"]),
-      ...mk("Ausstattung",["Kinderwagen","Regenschutz","Babyschalenadapter","Trage","Kumja","Babyfon","Wickelunterlage","Spielzeug","Leuchtkugel","Stillkissen","Nestchen","Kopfkissen"]),
-      ...mk("Für uns",["Wasserflasche","Kopfhörer","Portmonnaie","Aufladekabel","Buch","Pille"])
+    {id:uid(), name:"Reisen mit Baby (über Nacht)", icon:"👶", items:reisen(false)},
+    {id:uid(), name:"Reisen mit Kleinkind (über Nacht)", icon:"🧒", items:reisen(true)},
+    {id:uid(), name:"Wickelrucksack", icon:"🎒", items:[
+      ...mk("Kind",["Wasserflasche","Wechselkleidung","Sonnencreme","Snacks","Wickelunterlagen","Windeln","Feuchttücher","Spucktücher","Schnuller","Sonnenhut / Mütze"]),
+      ...mk("Für uns",["Wasserflasche","Snacks","Kopfschmerztabletten","Taschentücher"])
     ]},
-    {id:uid(), name:"Im Sommer immer einpacken", icon:"☀️", items:[
-      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Aufladekabel","Mücken Blitzdings","Wasserflasche","Sonnencreme","Schwimmsachen"]),
-      ...mk("Kind",["Wasserflasche Kind","Sonnenhut Kind","Snacks","Windeln und co","Wechselzeug","Sonnencreme"])
+    {id:uid(), name:"Im Sommer einpacken", icon:"☀️", items:[
+      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Mücken Blitzdings","Wasserflasche","Sonnencreme","Schwimmsachen","Kopfhörer","Sonnenbrille"]),
+      ...mk("Kind",["Wasserflasche","Sonnenhut","Snacks","Windeln","Wickelunterlagen","Feuchttücher","Wechselkleidung","Sonnencreme","Sonnenshirt","Schwimmwindeln","Handtuch","Sandspielzeug"])
     ]},
     {id:uid(), name:"Im Herbst einpacken", icon:"🍂", items:[
-      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Aufladekabel","Wasserflasche","Regenjacke","Regenschirm","Taschentücher"]),
-      ...mk("Kind",["Wasserflasche Kind","Mütze","Matschhose","Gummistiefel","Regenjacke Kind","Regenschutz Kinderwagen","Snacks","Windeln und co","Wechselzeug"])
+      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Wasserflasche","Regenjacke","Regenschirm","Taschentücher","Kopfhörer"]),
+      ...mk("Kind",["Wasserflasche","Mütze","Matschhose","Gummistiefel","Regenjacke","Regenschutz Kinderwagen","Snacks","Windeln","Wickelunterlagen","Feuchttücher","Wechselkleidung"])
     ]},
     {id:uid(), name:"Im Winter einpacken", icon:"❄️", items:[
-      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Aufladekabel","Wasserflasche","Mütze","Schal","Handschuhe","Lippenpflege","Thermoskanne mit Tee"]),
-      ...mk("Kind",["Wasserflasche Kind","Schneeanzug","Wintermütze","Handschuhe Kind","Winterschuhe","Fußsack / Decke","Wind- und Wettercreme","Snacks","Windeln und co","Wechselzeug"])
-    ]},
-    {id:uid(), name:"Ultimative Reiseliste", icon:"✈️", items:[
-      ...mk("Badzeug",["2x Sonnencreme","Bite away","Autan","Allesseife","Ibuprofen","Taschentücher (mehrere Pack)","Nagelpfeile","Nagelschere","Zahnpasta","Zahnbürsten","Bürste","Schminke","Shampoo","Tampons","Haargummis","Deo","Gesichtswaschzeug","Gesichtscreme","Handcreme"]),
-      ...mk("Kleidung Vater",["NoSeaLife Hosen"]),
-      ...mk("Sonstiges",["Bauchtasche","Adapter","Kindl","Buch","Ladekabel","Stifte","Wasserflasche","Spiele (Cabo, Doppelkopf...)","3x Reisepass","Portmonnaie","Bargeld","Kreditkarten","Kamera","Sonnenbrillending Vater","Kopfhörer","Snacks"])
+      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Wasserflasche","Mütze","Schal","Handschuhe","Thermoskanne mit Tee","Kopfhörer","Taschentücher"]),
+      ...mk("Kind",["Wasserflasche","Schneeanzug","Wintermütze","Handschuhe","Winterschuhe","Fußsack / Decke","Snacks","Windeln","Wickelunterlagen","Feuchttücher","Wechselkleidung"])
     ]},
     {id:uid(), name:"Ultimative Küchenliste", icon:"🍳", items:[
-      ...mk("Küchenutensilien",["Messer","Clips","Ziplock bags","Salz","Tupperdose","Geschirrhandtuch","Müllbeutel","Teller","Schälchen","Zewa","Spüli","Schwamm","Spülmaschinentabs"])
+      ...mk("Küchenutensilien",["Messer","Clips","Ziplock bags","Salz","Tupperdose","Geschirrhandtuch","Müllbeutel","Teller","Schälchen","Zewa","Spüli","Schwamm","Spülmaschinentabs","Brotdosen"])
     ]},
-    {id:uid(), name:"Ultimative Liste Mutter", icon:"👗", items:[
-      ...mk("Kleidung Mutter",["Sonnenshirt","Sonnenhut","Birkenstock","Kleider","Rock","Unterwäsche","Socken","BH","Bikini","Reisehandtuch","Wäschenetz","Jeans","Jogginghose","Tshirts","Pullover","Schlafsachen"])
+    {id:uid(), name:"Ultimative Liste Kleidung", icon:"👗", items:[
+      ...mk("Kleidung Sommer",MUTTER_SOMMER),
+      ...mk("Kleidung Winter",MUTTER_WINTER),
+      ...mk("Kleidung allgemein",["Kleider","Rock","Unterwäsche","Socken","BH","Reisehandtuch","Wäschenetz","Jeans","Jogginghose","Tshirts","Pullover","Schlafsachen","Strumpfhosen"]),
+      ...mk("Vater",VATER)
     ]},
     {id:uid(), name:"Ultimative Kinderliste", icon:"🧸", items:[
-      ...mk("Kind – Kleidung",["Body","Sonnenhut","Sonnenshirt","Wintermütze","Schlafsack","Schlafanzug","Decke","Jacke","Schuhe","Hausschuhe","Anzug","Handschuhe","Regensachen","Socken","Hosen","Strumpfhosen","Tshirts","Kleider?","Handtuch"]),
-      ...mk("Kind – Badzeug",["Zinksalbe","Windeln","Feuchttücher (1 normales Pack und das Pack mit dem guten Verschluss)","Vitamin D Tabletten","Fiebersenker","Zahnbürste","Zahnpasta","Schnuller","Fieberthermometer","2-3x Sonnencreme","Schwimmwindeln","Wickelunterlagen"]),
-      ...mk("Kind – Küchenzeug",["Lätzchen","Löffel","Abendessen","Haferflocken","Mittagsgläschen","Tüten Snacks","Wasserflasche","Nuk Becher","Tücher zum Saubermachen"]),
-      ...mk("Kind – Spielzeug",["Bücher","Puppe","Stapelbecher"]),
-      ...mk("Kind – Sonstiges",["Leuchtkugel","Sonnenschutz Buggy","Kindersitz für Stuhl","Buggy","Trage","Babyfon"])
+      ...mk("Kind – Kleidung Sommer",["Sonnenhut","Sonnenshirt","Sonnenbrille","Badesachen"]),
+      ...mk("Kind – Kleidung Winter",["Wintermütze","Anzug","Handschuhe","Winterschuhe","Schal / Loop"]),
+      ...mk("Kind – Kleidung allgemein",["Bodys","Schlafsack","Schlafanzug","Decke","Jacke","Schuhe","Hausschuhe","Regensachen","Socken","Hosen","Strumpfhosen","Tshirts","Kleider?","Handtuch","Mütze","Spucktücher"]),
+      ...mk("Kind – Badzeug",["Zinksalbe","Windeln","Feuchttücher (1 normales Pack und das Pack mit dem guten Verschluss)","Vitamin D","Fiebersenker","Zahnbürste","Zahnpasta","Schnuller","Fieberthermometer","2-3x Sonnencreme","Schwimmwindeln","Wickelunterlagen","Nasensauger"]),
+      ...mk("Kind – Küchenzeug",["Lätzchen","Löffel","Abendessen","Haferflocken","Mittagsgläschen","Snacks","Wasserflasche","Nuk Becher","Tücher zum Saubermachen","Milch","Bananen"]),
+      ...mk("Kind – Spielzeug",["Bücher","Puppe","Kuscheltier"]),
+      ...mk("Kind – Ausstattung",["Leuchtkugel","Sonnensegel","Kinderwagen","Trage","Babyfon","Regenschutz Kinderwagen","Babyschalenadapter","Kumja","Kopfkissen","Insektennetz","Reisebett"])
     ]},
     {id:uid(), name:"Ultimative Hundeliste", icon:"🐶", items:[
       ...mk("Scotty",["Futter","Näpfe","Reisepass","Leinen","Leuchthalsband","Kacktüten","Ball","Körbchen","Kühlmatte","Wintermantel"])
+    ]},
+    {id:uid(), name:"Ultimative Badliste", icon:"🧴", items:[
+      ...mk("Badzeug",["2x Sonnencreme","Bite away","Autan","Allesseife","Kopfschmerztabletten","Taschentücher (mehrere Pack)","Nagelpfeile","Nagelschere","Zahnpasta","Zahnbürsten","Bürste","Schminke","Shampoo","Tampons","Haargummis","Deo","Gesichtswaschzeug","Gesichtscreme","Handcreme","Pille","Pflaster","Desinfektionsspray","Nasenspray"])
+    ]},
+    {id:uid(), name:"Ultimative Liste Sonstiges", icon:"🎒", items:[
+      ...mk("Für uns",["Bauchtasche","Adapter","Kindl","Buch","Ladekabel","Stifte","Wasserflasche","Spiele (Cabo, Doppelkopf...)","3x Reisepass","Portmonnaie","Bargeld","Kreditkarten","Kamera","Sonnenbrillending Vater","Kopfhörer","Snacks","Krankenversicherungskarte"])
     ]}
   ];
 }
@@ -244,47 +285,196 @@ function splitUltimate(){
     db.templates.splice(++at, 0, {id:uid(), name:g.name, icon:g.icon, items:moved.map(i=>({id:uid(), text:i.text, cat:i.cat}))});
   });
 }
+// Version 5: Rest der „Ultimativen Reiseliste“ aufteilen (Badzeug, Sonstiges), „Kleidung Vater“ entfernen,
+// Abschnitt „Vater“ in die Liste der Mutter, danach die Ultimative Reiseliste löschen
+function splitUltimate2(){
+  const fam = familyTemplates();
+  const mother = db.templates.find(x=>x.name==="Ultimative Liste Mutter");
+  if(mother && !mother.share) mergeItems(mother.items, VATER.map(t=>({text:t, cat:"Vater"})), false);
+  const t = db.templates.find(x=>x.name==="Ultimative Reiseliste");
+  if(!t || t.share) return;
+  let at = db.templates.indexOf(t);
+  const put = (name, items)=>{
+    if(!items.length) return;
+    const ex = db.templates.find(x=>x.name===name);
+    if(ex){ mergeItems(ex.items, items, false); return; }
+    const f = fam.find(x=>x.name===name);
+    db.templates.splice(++at, 0, {id:uid(), name, icon:f?f.icon:"📦", items:items.map(i=>({id:uid(), text:i.text, cat:i.cat}))});
+  };
+  const rest = t.items.filter(i=>i.cat!=="Kleidung Vater");
+  put("Ultimative Badliste", rest.filter(i=>i.cat==="Badzeug"));
+  put("Ultimative Liste Sonstiges", rest.filter(i=>i.cat!=="Badzeug"));   // auch eigene Kategorien landen hier
+  db.templates.splice(db.templates.indexOf(t), 1);
+}
+// Version 6: Vorlagen aufräumen, Kleinkind-Liste und Wickelrucksack (eigene Ergänzungen bleiben erhalten)
+function tplOps(t){
+  const del = (text, cat) => { t.items = t.items.filter(i=>!(i.text===text && (!cat || i.cat===cat))); };
+  return {
+    del,
+    delCat: cat => { t.items = t.items.filter(i=>i.cat!==cat); },
+    ren: (from, to, cat) => t.items.forEach(i=>{ if(i.text===from && (!cat || i.cat===cat)) i.text = to; }),
+    add: (cat, list) => mergeItems(t.items, list.map(text=>({text, cat})), false),
+    move: (from, fromCat, to, toCat) => { del(from, fromCat); mergeItems(t.items, [{text:to, cat:toCat}], false); }
+  };
+}
+function upgradeV6(){
+  const own = n => db.templates.find(t=>t.name===n && !t.share);
+  db.templates = db.templates.filter(t => t.share || !["Besuch bei den Großeltern","Urlaub Winter"].includes(t.name));
+  const summer = own("Im Sommer immer einpacken"); if(summer && !db.templates.some(t=>t.name==="Im Sommer einpacken")) summer.name = "Im Sommer einpacken";
+  const baby = own("Reisen mit Baby (über Nacht)");
+  if(!baby) return;
+  let at = db.templates.indexOf(baby);
+  let kid = db.templates.find(t=>t.name==="Reisen mit Kleinkind (über Nacht)");
+  if(!kid){
+    kid = {id:uid(), name:"Reisen mit Kleinkind (über Nacht)", icon:"🧒", items:baby.items.map(i=>({id:uid(), text:i.text, cat:i.cat}))};
+    db.templates.splice(++at, 0, kid);
+    const k = tplOps(kid);
+    k.ren("Essen","Anderes Essen","Essen");
+    k.add("Essen",["Wasserflasche"]);
+    k.del("Nestchen","Ausstattung");
+  } else at = db.templates.indexOf(kid);
+  [baby, kid].forEach(t=>{
+    if(t.share) return;
+    const o = tplOps(t);
+    o.ren("Body","Bodys","Kleidung");
+    o.add("Kleidung",["Socken"]);
+    o.move("Wickelunterlage","Ausstattung","Wickelunterlagen","Pflege & Gesundheit");
+    o.add("Ausstattung",["Sonnensegel","Insektennetz"]);
+    o.add("Für uns",["Kleidung","Kopfschmerztabletten"]);
+  });
+  const b = tplOps(baby); b.del("Schuhe","Kleidung"); b.delCat("Essen");
+  if(!db.templates.some(t=>t.name==="Wickelrucksack"))
+    db.templates.splice(at+1, 0, {id:uid(), name:"Wickelrucksack", icon:"🎒", items:mk("Wickelrucksack",WICKELRUCKSACK)});
+}
+// Kategorien in eine feste Reihenfolge bringen (übrige behalten ihre Position dahinter)
+function sortCats(t, order){
+  const rank = c => { const i = order.indexOf(c); return i < 0 ? order.length : i; };
+  t.items = t.items.map((it,i)=>({it,i})).sort((a,b)=>rank(a.it.cat)-rank(b.it.cat) || a.i-b.i).map(x=>x.it);
+}
+// Version 7: Kleidung nach Sommer / Winter / allgemein, Ergänzungen in mehreren Vorlagen
+function upgradeV7(){
+  const own = n => db.templates.find(t=>t.name===n && !t.share);
+  const m = own("Ultimative Liste Mutter");
+  if(m){
+    if(!db.templates.some(t=>t.name==="Ultimative Liste Kleidung")) m.name = "Ultimative Liste Kleidung";
+    m.items.forEach(i=>{ if(i.cat==="Kleidung Mutter") i.cat = MUTTER_SOMMER.includes(i.text) ? "Kleidung Sommer" : "Kleidung allgemein"; });
+    const o = tplOps(m); o.add("Kleidung Winter", MUTTER_WINTER); o.add("Kleidung allgemein", ["Strumpfhosen"]);
+    sortCats(m, ["Kleidung Sommer","Kleidung Winter","Kleidung allgemein"]);
+  }
+  const sommer = own("Im Sommer einpacken");
+  if(sommer){ const o = tplOps(sommer); o.add("Für uns",["Kopfhörer"]); o.add("Kind",["Sonnenshirt","Schwimmwindel","Handtuch","Sandspielzeug"]); }
+  const herbst = own("Im Herbst einpacken"); if(herbst) tplOps(herbst).add("Für uns",["Kopfhörer"]);
+  const winter = own("Im Winter einpacken");
+  if(winter){ const o = tplOps(winter); o.del("Lippenpflege","Für uns"); o.del("Wind- und Wettercreme","Kind"); o.add("Für uns",["Kopfhörer"]); }
+  const bad = own("Ultimative Badliste"); if(bad) tplOps(bad).add("Badzeug",["Pille"]);
+  const kid = own("Ultimative Kinderliste");
+  if(kid){
+    kid.items.forEach(i=>{
+      if(i.cat!=="Kind – Kleidung") return;
+      if(i.text==="Body") i.text = "Bodys";
+      i.cat = KIND_SOMMER.includes(i.text) ? "Kind – Kleidung Sommer" : KIND_WINTER.includes(i.text) ? "Kind – Kleidung Winter" : "Kind – Kleidung allgemein";
+    });
+    const o = tplOps(kid); o.del("Stapelbecher","Kind – Spielzeug"); o.del("Kindersitz für Stuhl","Kind – Sonstiges");
+    Object.entries(KIND_ADD).forEach(([c,l])=>o.add(c,l));
+    sortCats(kid, ["Kind – Kleidung Sommer","Kind – Kleidung Winter","Kind – Kleidung allgemein","Kind – Badzeug","Kind – Küchenzeug","Kind – Spielzeug","Kind – Sonstiges"]);
+  }
+}
+// Version 8: Ergänzungen aus den Vorschlägen
+const V8_ADD = [
+  ["Reisen mit Baby (über Nacht)", "Pflege & Gesundheit", ["Sonnencreme"]],
+  ["Reisen mit Kleinkind (über Nacht)", "Pflege & Gesundheit", ["Sonnencreme"]],
+  ["Wickelrucksack", "Wickelrucksack", ["Schnuller","Sonnenhut / Mütze"]],
+  ["Im Sommer einpacken", "Für uns", ["Sonnenbrille"]],
+  ["Im Winter einpacken", "Für uns", ["Taschentücher"]],
+  ["Ultimative Badliste", "Badzeug", ["Pflaster","Desinfektionsspray","Nasenspray"]],
+  ["Ultimative Liste Sonstiges", "Sonstiges", ["Krankenversicherungskarte"]],
+  ["Ultimative Küchenliste", "Küchenutensilien", ["Salz","Brotdosen"]]
+];
+function upgradeV8(){
+  V8_ADD.forEach(([name, cat, list])=>{
+    const t = db.templates.find(x=>x.name===name && !x.share);
+    if(t) tplOps(t).add(cat, list);
+  });
+}
+// Version 9: einheitliche Kategorien und Namen, damit sich kombinierte Vorlagen sauber zusammenfassen
+const V9_TEXT = {"Aufladekabel":"Ladekabel","Spucktuch":"Spucktücher","Wickelunterlage":"Wickelunterlagen","Schwimmwindel":"Schwimmwindeln",
+  "Vitamin D Tabletten":"Vitamin D","Wechselzeug":"Wechselkleidung","Windeln und co":"Windeln","Ibuprofen":"Kopfschmerztabletten","Tüten Snacks":"Snacks",
+  "Buggy":"Kinderwagen","Regenschutz Buggy":"Regenschutz Kinderwagen","Sonnenschutz Buggy":"Sonnensegel"};
+const V9_REISE_CAT = {"Kleidung":"Kind – Kleidung allgemein","Pflege & Gesundheit":"Kind – Badzeug","Essen":"Kind – Küchenzeug","Ausstattung":"Kind – Ausstattung"};
+const isKindCat = c => c==="Kind" || /^Kind – /.test(c);
+function dedupe(t){
+  const seen = new Set();
+  t.items = t.items.filter(i=>{ const k=(i.cat||"").toLowerCase()+"|"+i.text.toLowerCase(); if(seen.has(k)) return false; seen.add(k); return true; });
+}
+function upgradeV9(){
+  db.templates.forEach(t=>{
+    if(t.share) return;
+    const reise = /^Reisen mit (Baby|Kleinkind) \(über Nacht\)$/.test(t.name);
+    t.items.forEach(i=>{
+      if(reise && V9_REISE_CAT[i.cat]){ if(i.cat==="Ausstattung" && i.text==="Regenschutz") i.text="Regenschutz Kinderwagen"; i.cat = V9_REISE_CAT[i.cat]; }
+      if(t.name==="Ultimative Kinderliste" && i.cat==="Kind – Sonstiges") i.cat = "Kind – Ausstattung";
+      if(t.name==="Ultimative Liste Sonstiges" && i.cat==="Sonstiges") i.cat = "Für uns";
+      if(t.name==="Wickelrucksack" && i.cat==="Wickelrucksack"){
+        if(i.text==="Wasserflasche Erwachsener"){ i.text="Wasserflasche"; i.cat="Für uns"; }
+        else if(i.text==="Snack Erwachsener"){ i.text="Snacks"; i.cat="Für uns"; }
+        else if(i.text==="Snack Kind"){ i.text="Snacks"; i.cat="Kind"; }
+        else if(["Kopfschmerztabletten","Taschentücher"].includes(i.text)) i.cat="Für uns";
+        else i.cat="Kind";
+      }
+      if(V9_TEXT[i.text]) i.text = V9_TEXT[i.text];
+      if(isKindCat(i.cat||"") && / Kind$/.test(i.text)) i.text = i.text.replace(/ Kind$/,"");
+    });
+    if(t.name==="Wickelrucksack") sortCats(t, ["Kind","Für uns"]);
+    dedupe(t);
+  });
+}
+// Version 10: „Windeln und co“ = Windeln, Wickelunterlagen, Feuchttücher (direkt hinter Windeln einfügen)
+function upgradeV10(){
+  ["Im Sommer einpacken","Im Herbst einpacken","Im Winter einpacken"].forEach(n=>{
+    const t = db.templates.find(x=>x.name===n && !x.share); if(!t) return;
+    const has = x => t.items.some(i=>i.cat==="Kind" && i.text.toLowerCase()===x.toLowerCase());
+    const add = ["Wickelunterlagen","Feuchttücher"].filter(x=>!has(x)).map(text=>({id:uid(), text, cat:"Kind"}));
+    if(!add.length) return;
+    const at = t.items.findIndex(i=>i.cat==="Kind" && i.text==="Windeln");
+    if(at<0){ const last = t.items.map(i=>i.cat).lastIndexOf("Kind"); t.items.splice(last<0?t.items.length:last+1, 0, ...add); }
+    else t.items.splice(at+1, 0, ...add);
+  });
+}
 function upgradeTemplates(){
   const v = db.tplVersion||1;
-  if(v >= 4) return;
+  if(v >= 10) return;
   if(v < 2){
     db.templates = db.templates.filter(t => t.share || OLD_EXAMPLES[t.name] !== t.items.map(i=>i.text).join("|"));
     const have = new Set(db.templates.map(t=>t.name));
     db.templates.unshift(...familyTemplates().filter(t=>!have.has(t.name)));
     db.events.concat(db.templates).forEach(o=>o.items.forEach(i=>{ i.cat=renamePeople(i.cat||"Sonstiges"); i.text=renamePeople(i.text); }));
-    db.tplVersion = 4; return;
+    db.templates = db.templates.filter(t => t.share || !["Besuch bei den Großeltern","Urlaub Winter"].includes(t.name));
+    db.tplVersion = 10; return;
   }
   if(v < 3){
     // Version 3: Namen → Mutter / Vater / Kind, neue Herbst- und Winter-Vorlage
     db.events.concat(db.templates).forEach(o=>o.items.forEach(i=>{ i.cat=renamePeople(i.cat||"Sonstiges"); i.text=renamePeople(i.text); }));
     const have = new Set(db.templates.map(t=>t.name));
     const add = familyTemplates().filter(t=>["Im Herbst einpacken","Im Winter einpacken"].includes(t.name) && !have.has(t.name));
-    const at = db.templates.findIndex(t=>t.name==="Im Sommer immer einpacken");
+    const at = db.templates.findIndex(t=>/^Im Sommer( immer)? einpacken$/.test(t.name));
     db.templates.splice(at<0?db.templates.length:at+1, 0, ...add);
   }
-  splitUltimate();
-  db.tplVersion = 4;
+  if(v < 4) splitUltimate();
+  if(v < 5) splitUltimate2();
+  if(v < 6) upgradeV6();
+  if(v < 7) upgradeV7();
+  if(v < 8) upgradeV8();
+  if(v < 9) upgradeV9();
+  upgradeV10();
+  db.tplVersion = 10;
 }
 function defaultData(){
   return {
     templates:[
-      ...familyTemplates(),
-      {id:uid(), name:"Urlaub Winter", icon:"❄️", items:[
-        ...mk("Kleidung",["Winterjacke","Skihose","Thermounterwäsche","Pullover","Warme Socken","Mütze","Schal","Handschuhe","Winterschuhe","Hausschuhe","Schlafsachen"]),
-        ...mk("Hygiene",["Zahnbürste & Zahnpasta","Duschgel & Shampoo","Deo","Lippenpflege","Sonnencreme (hoher LSF)","Reiseapotheke"]),
-        ...mk("Technik",["Handy & Ladekabel","Powerbank"]),
-        ...mk("Dokumente",["Personalausweis","Krankenversicherungskarte","Skipass / Buchung","Bargeld & Karten"]),
-        ...mk("Sonstiges",["Sonnenbrille / Skibrille","Thermoskanne","Schneeketten / Eiskratzer"])
-      ]},
-      {id:uid(), name:"Besuch bei den Großeltern", icon:"👵", items:[
-        ...mk("Kleidung",["Wechselkleidung","Schlafsachen","Hausschuhe"]),
-        ...mk("Hygiene",["Zahnbürste & Zahnpasta","Waschzeug"]),
-        ...mk("Kinder",["Lieblingsspielzeug","Bücher","Kuscheltier"]),
-        ...mk("Sonstiges",["Handy & Ladekabel","Mitbringsel","Fotos für Oma & Opa"])
-      ]}
+      ...familyTemplates()
     ],
     events:[],
-    tplVersion:4
+    tplVersion:10
   };
 }
 let db;
@@ -383,16 +573,55 @@ function renderEvents(hdr,main,bottom){
   bottom.innerHTML = `<button class="fab" onclick="newEventDialog()" aria-label="Neues Ereignis">${I.plus}</button>` + navBar("events");
 }
 
+let tplQuery = "";
+const fold = x => String(x||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ß/g,"ss");
+function hl(text, q){
+  if(!q) return esc(text);
+  const f = fold(text), i = f.indexOf(q);
+  if(i<0) return esc(text);
+  return esc(text.slice(0,i)) + "<mark>" + esc(text.slice(i,i+q.length)) + "</mark>" + esc(text.slice(i+q.length));
+}
 function renderTemplates(hdr,main,bottom){
   hdr.innerHTML = `<h1>Vorlagen</h1><button class="iconbtn" onclick="joinDialog()" aria-label="Gemeinsamer Liste beitreten" title="Gemeinsamer Liste beitreten">${I.people}</button>`;
-  main.innerHTML = `<p class="hint">Allgemeine Listen, aus denen du Packlisten für Ereignisse erstellst.</p>` +
-    (db.templates.length ? [...db.templates].sort((a,b)=>a.name.localeCompare(b.name,"de")).map(t=>`
+  main.innerHTML = `<div class="search">${I.search}
+      <input type="search" id="tplSearch" placeholder="Vorlagen und Einträge durchsuchen" autocomplete="off" enterkeyhint="search" value="${esc(tplQuery)}" aria-label="Vorlagen durchsuchen">
+      <button class="iconbtn" id="tplClear" aria-label="Suche leeren" ${tplQuery?"":"hidden"}>${I.x}</button>
+    </div>
+    <div id="tplList"></div>`;
+  const inp = $("#tplSearch");
+  inp.addEventListener("input", ()=>{ tplQuery = inp.value; $("#tplClear").hidden = !tplQuery; renderTplList(); });
+  inp.addEventListener("keydown", e=>{ if(e.key==="Escape"){ tplQuery=""; inp.value=""; $("#tplClear").hidden=true; renderTplList(); } });
+  $("#tplClear").addEventListener("click", ()=>{ tplQuery=""; inp.value=""; $("#tplClear").hidden=true; renderTplList(); inp.focus(); });
+  renderTplList();
+  bottom.innerHTML = `<button class="fab" onclick="newTemplateDialog()" aria-label="Neue Vorlage">${I.plus}</button>` + navBar("templates");
+}
+function renderTplList(){
+  const box = $("#tplList"); if(!box) return;
+  const q = fold(tplQuery.trim());
+  const sorted = [...db.templates].sort((a,b)=>a.name.localeCompare(b.name,"de"));
+  if(!db.templates.length){ box.innerHTML = `<div class="empty"><div class="big">📋</div>Noch keine Vorlagen.</div>`; return; }
+  const meta = t => `${t.share?I.people.replace("<svg",'<svg class="ico"')+" gemeinsam · ":""}${t.items.length} ${t.items.length===1?"Eintrag":"Einträge"} · ${cats(t.items).length} ${cats(t.items).length===1?"Kategorie":"Kategorien"}`;
+  const card = (t, sub) => `
     <div class="card" onclick="go({name:'template',id:'${t.id}'})">
       <div class="emoji">${esc(t.icon||"📦")}</div>
-      <div class="body"><div class="title">${esc(t.name)}</div>
-      <div class="sub">${t.share?I.people.replace("<svg",'<svg class="ico"')+" gemeinsam · ":""}${t.items.length} Einträge · ${cats(t.items).length} Kategorien</div></div>
-    </div>`).join("") : `<div class="empty"><div class="big">📋</div>Noch keine Vorlagen.</div>`);
-  bottom.innerHTML = `<button class="fab" onclick="newTemplateDialog()" aria-label="Neue Vorlage">${I.plus}</button>` + navBar("templates");
+      <div class="body"><div class="title">${hl(t.name,q)}</div>
+      <div class="sub">${sub}</div></div>
+    </div>`;
+  if(!q){ box.innerHTML = `<p class="hint">Allgemeine Listen, aus denen du Packlisten für Ereignisse erstellst.</p>` + sorted.map(t=>card(t, meta(t))).join(""); return; }
+  const hits = sorted.map(t=>{
+    const nameHit = fold(t.name).includes(q);
+    const items = t.items.filter(i=>fold(i.text).includes(q) || fold(i.cat).includes(q));
+    return {t, nameHit, items};
+  }).filter(h=>h.nameHit || h.items.length)
+    .sort((a,b)=>(b.nameHit-a.nameHit) || (b.items.length-a.items.length));
+  if(!hits.length){ box.innerHTML = `<div class="empty"><div class="big">🔍</div>Nichts gefunden für „${esc(tplQuery.trim())}“.</div>`; return; }
+  const n = hits.reduce((s,h)=>s+h.items.length,0);
+  box.innerHTML = `<p class="hint">${hits.length} ${hits.length===1?"Vorlage":"Vorlagen"}${n?`, ${n} ${n===1?"Eintrag":"Einträge"}`:""}</p>` + hits.map(h=>{
+    if(!h.items.length) return card(h.t, meta(h.t));
+    const shown = h.items.slice(0,6).map(i=>`<span class="hit">${hl(i.text,q)} <small>${hl(i.cat||"Sonstiges",q)}</small></span>`).join("");
+    const more = h.items.length>6 ? `<span class="hit more">+${h.items.length-6} weitere</span>` : "";
+    return card(h.t, `<div class="hits">${shown}${more}</div>`);
+  }).join("");
 }
 
 function renderSettings(hdr,main,bottom){
