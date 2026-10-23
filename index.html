@@ -121,6 +121,12 @@ dialog input[type=text],dialog input[type=date],dialog select,dialog textarea{wi
 .hits{display:flex;flex-wrap:wrap;gap:4px 6px;margin-top:4px}
 .hit{background:var(--accent-soft);color:var(--text);border-radius:8px;padding:2px 8px;font-size:.82rem}
 .hit small{color:var(--muted);font-size:.72rem}
+.grp{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:14px 4px 8px;cursor:pointer;color:var(--muted);text-align:left}
+.grp span{flex:1;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;font-weight:600;color:var(--text)}
+.grp small{font-size:.8rem}
+.grp svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.grp.closed svg{transform:rotate(-90deg)}
+.pick-h{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 2px 2px;font-weight:600}
 .hit.more{background:transparent;color:var(--muted);padding-left:2px}
 .hit.done{color:var(--muted);text-decoration:line-through}
 .hit.done .ico{color:var(--accent);text-decoration:none}
@@ -187,6 +193,7 @@ const I = {
   x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   kid:'<svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="3"/><path d="M8 21v-6l-2-4h12l-2 4v6"/><path d="M8 11l4 2 4-2"/></svg>',
   grip:'<svg viewBox="0 0 24 24"><path d="M5 9h14M5 15h14"/></svg>',
+  chev:'<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
   people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.4 0 4.1 1.5 4.5 4.5"/></svg>',
   gear:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 };
@@ -211,6 +218,15 @@ const mkPer = (cat, list, per) => list.map(t => ({id:uid(), text:t, cat, ...(per
 const WR_CAT = ["Wechselkleidung","Wickelunterlagen","Windeln","Feuchttücher","Spucktücher","Schnuller"];
 const WR_PER = ["Wechselkleidung","Windeln","Schnuller"];
 const SEASON_WR = ["Wechselkleidung","Wickelunterlagen","Windeln","Feuchttücher"];
+// Saisonlisten: Kleidung → „Kind – Kleidung“ (pro Kind), Übriges → „Wickelrucksack“ pro Kind (außer Sonnencreme)
+const SEASON_CLOTHES = ["Sonnenhut","Sonnenshirt","Mütze","Matschhose","Gummistiefel","Regenjacke","Schneeanzug","Wintermütze","Handschuhe","Winterschuhe"];
+const SEASON_SHARED = ["Sonnencreme"];
+const SEASON_CLOTHES_CAT = {"Im Sommer einpacken":"Kind – Kleidung Sommer","Im Herbst einpacken":"Kind – Kleidung allgemein","Im Winter einpacken":"Kind – Kleidung Winter"};
+const seasonKid = (list, clothesCat) => [
+  ...mk(clothesCat, list.filter(t=>SEASON_CLOTHES.includes(t))),
+  ...mkPer("Wickelrucksack", SEASON_WR, WR_PER),
+  ...list.filter(t=>!SEASON_CLOTHES.includes(t)).map(t=>({id:uid(), text:t, cat:"Wickelrucksack", ...(SEASON_SHARED.includes(t)?{}:{perKid:true})}))
+];
 
 const VATER = ["Kleidung","Schuhe","Jacke","Haarzeug","Zahnbürste"];
 const THERME = ["Handtücher","Bademantel","Saunalaken","2x Shampoo","Badeanzug","Badehose","Schwimmbrille","Kopfhörer","Buch","Äpfel","Anderes Essen","Wasserflasche","Badelatschen","Kuschelsocken","Frische Unterwäsche"];
@@ -228,55 +244,78 @@ const KIND_ADD = {
   "Kind – Sonstiges": ["Regenschutz Buggy","Babyschalenadapter","Kumja","Kopfkissen","Insektennetz","Reisebett"]
 };
 const WICKELRUCKSACK = ["Wasserflasche Kind","Wasserflasche Erwachsener","Wechselkleidung","Sonnencreme","Snack Kind","Snack Erwachsener","Wickelunterlage","Windeln","Feuchttücher","Kopfschmerztabletten","Taschentücher","Spucktuch","Schnuller","Sonnenhut / Mütze"];
+// Reihenfolge in „Kind – Badzeug“ und „Kind – Kleidung allgemein“
+const BAD_ORDER = ["Windeln","Wickelunterlagen","Feuchttücher","Vitamin D","Schnuller","Zahnbürste","Zahnpasta","Zinksalbe","Nasensauger","Fiebersenker","Fieberthermometer","Sonnencreme","Schwimmwindeln","Handtuch"];
+const KIDS_ALLG_ORDER = ["Bodys","Hosen","Oberteile","Unterhosen","Socken","Strumpfhosen","Schuhe","Hausschuhe","Schlafsack","Schlafanzug","Decke","Jacke","Mütze","Matschhose","Regenjacke","Gummistiefel","Kleider","Spucktücher"];
+function sortWithin(t, cat, rank){
+  const idx = t.items.map((it,i)=>it.cat===cat?i:-1).filter(i=>i>=0);
+  const sorted = idx.map(i=>t.items[i]).map((it,k)=>({it,k})).sort((a,b)=>(rank(a.it.text)-rank(b.it.text)) || a.k-b.k).map(x=>x.it);
+  idx.forEach((i,k)=>{ t.items[i] = sorted[k]; });
+}
+function moveAfter(list, name, anchor){
+  const a = list.findIndex(i=>i.text===name), b = list.findIndex(i=>i.text===anchor);
+  if(a<0 || b<0) return;
+  const [it] = list.splice(a,1); list.splice(list.findIndex(i=>i.text===anchor)+1, 0, it);
+}
+function kidOrder(t){
+  sortWithin(t, "Kind – Badzeug", txt=>{ const r = BAD_ORDER.findIndex(e=>txt===e || txt.startsWith(e+" ") || txt.endsWith(" "+e)); return r<0 ? BAD_ORDER.length : r; });
+  const cat = "Kind – Kleidung allgemein", idx = t.items.map((it,i)=>it.cat===cat?i:-1).filter(i=>i>=0);
+  if(!idx.length) return t;
+  const list = idx.map(i=>t.items[i]);
+  moveAfter(list, "Socken", "Unterhosen");
+  moveAfter(list, "Mütze", "Jacke");
+  const sp = list.findIndex(i=>i.text==="Spucktücher"); if(sp>=0) list.push(...list.splice(sp,1));
+  idx.forEach((i,k)=>{ t.items[i] = list[k]; });
+  return t;
+}
 function familyTemplates(){
   const reisen = kleinkind => [
-    ...mk("Kind – Kleidung allgemein",["Bodys","Hosen","Oberteile","Unterhosen",...(kleinkind?["Schuhe"]:[]),"Mütze","Schlafsack","Decke","Jacke","Spucktücher","Socken"]),
+    ...mk("Kind – Kleidung allgemein",["Bodys","Hosen","Oberteile","Unterhosen",...(kleinkind?["Schuhe"]:[]),"Mütze","Schlafsack",...(kleinkind?["Schlafanzug"]:[]),"Decke","Jacke","Spucktücher","Socken"]),
     ...mk("Kind – Badzeug",["Zinksalbe","Windeln","Feuchttücher","Vitamin D","Fiebersenker","Nasensauger","Zahnbürste","Zahnpasta","Schnuller","Wickelunterlagen","Sonnencreme"]),
     ...(kleinkind?mk("Kind – Küchenzeug",["Lätzchen","Löffel","Milch","Haferflocken","Bananen","Anderes Essen","Wasserflasche"]):[]),
     ...mk("Kind – Ausstattung",["Kinderwagen","Regenschutz Kinderwagen","Babyschalenadapter","Trage","Kumja","Babyfon","Spielzeug","Leuchtkugel","Stillkissen",...(kleinkind?[]:["Nestchen"]),"Kopfkissen","Sonnensegel","Insektennetz"]),
     ...mk("Für uns",["Wasserflasche","Kopfhörer","Portmonnaie","Ladekabel","Buch","Pille","Kleidung","Kopfschmerztabletten"])
   ];
   const markBad = items => items.map(i => i.cat==="Kind – Badzeug" && PER_KID.includes(i.text) ? {...i, perKid:true} : i);
+  return familyTemplatesRaw(markBad, reisen).map(kidOrder);
+}
+function familyTemplatesRaw(markBad, reisen){
   return [
     {id:uid(), name:"Reisen mit Baby (über Nacht)", icon:"👶", items:markBad(reisen(false))},
     {id:uid(), name:"Reisen mit Kleinkind (über Nacht)", icon:"🧒", items:markBad(reisen(true))},
     {id:uid(), name:"Wickelrucksack", icon:"🎒", items:[
-      ...mk("Kind",["Wasserflasche","Sonnencreme","Snacks","Sonnenhut","Mütze"]),
-      ...mkPer("Wickelrucksack",WR_CAT,WR_PER),
+      ...mk("Kind – Kleidung Sommer",["Sonnenhut"]),
+      ...mk("Kind – Kleidung allgemein",["Mütze"]),
+      ...mkPer("Wickelrucksack",[...WR_CAT,"Wasserflasche","Snacks","Sonnencreme"],[...WR_PER,"Wasserflasche","Snacks"]),
       ...mk("Für uns",["Wasserflasche","Snacks","Kopfschmerztabletten","Taschentücher"])
     ]},
     {id:uid(), name:"Im Sommer einpacken", icon:"☀️", items:[
       ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Mücken Blitzdings","Wasserflasche","Sonnencreme","Schwimmsachen","Kopfhörer","Sonnenbrille"]),
-      ...mk("Kind",["Wasserflasche","Sonnenhut","Snacks","Sonnencreme","Sonnenshirt","Schwimmwindeln","Handtuch"]),
-      ...mkPer("Wickelrucksack",SEASON_WR,WR_PER),
+      ...seasonKid(["Wasserflasche","Sonnenhut","Snacks","Sonnencreme","Sonnenshirt","Schwimmwindeln","Handtuch"], "Kind – Kleidung Sommer"),
       ...mk("Kind – Ausstattung",["Sonnensegel","Sandspielzeug"])
     ]},
     {id:uid(), name:"Im Herbst einpacken", icon:"🍂", items:[
       ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Wasserflasche","Regenjacke","Regenschirm","Taschentücher","Kopfhörer"]),
-      ...mk("Kind",["Wasserflasche","Mütze","Matschhose","Gummistiefel","Regenjacke","Snacks"]),
-      ...mkPer("Wickelrucksack",SEASON_WR,WR_PER),
+      ...seasonKid(["Wasserflasche","Mütze","Matschhose","Gummistiefel","Regenjacke","Snacks"], "Kind – Kleidung allgemein"),
       ...mk("Kind – Ausstattung",["Regenschutz Kinderwagen","Sandspielzeug"])
     ]},
     {id:uid(), name:"Im Winter einpacken", icon:"❄️", items:[
       ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Wasserflasche","Mütze","Schal","Handschuhe","Kopfhörer","Taschentücher"]),
-      ...mk("Kind",["Wasserflasche","Schneeanzug","Wintermütze","Handschuhe","Winterschuhe","Snacks"]),
-      ...mkPer("Wickelrucksack",SEASON_WR,WR_PER),
+      ...seasonKid(["Wasserflasche","Schneeanzug","Wintermütze","Handschuhe","Winterschuhe","Snacks"], "Kind – Kleidung Winter"),
       ...mk("Kind – Ausstattung",["Regenschutz Kinderwagen","Fußsack / Decke"])
     ]},
     {id:uid(), name:"Ultimative Küchenliste", icon:"🍳", items:[
       ...mk("Küchenutensilien",["Messer","Clips","Ziplock bags","Salz","Tupperdose","Geschirrhandtuch","Müllbeutel","Teller","Schälchen","Zewa","Spüli","Schwamm","Spülmaschinentabs","Brotdosen"])
     ]},
-    {id:uid(), name:"Ultimative Liste Kleidung", icon:"👗", items:[
-      ...mk("Kleidung Sommer",MUTTER_SOMMER),
-      ...mk("Kleidung Winter",MUTTER_WINTER),
-      ...mk("Kleidung allgemein",["Kleider","Rock","Unterwäsche","Socken","BH","Reisehandtuch","Wäschenetz","Jeans","Jogginghose","Tshirts","Pullover","Schlafsachen","Strumpfhosen"]),
-      ...mk("Vater",VATER)
-    ]},
+    {id:uid(), name:"Ultimative Liste Kleidung allgemein", icon:"👕", items:mk("Kleidung allgemein",["Kleider","Rock","Unterwäsche","Socken","BH","Reisehandtuch","Wäschenetz","Jeans","Jogginghose","Tshirts","Pullover","Schlafsachen","Strumpfhosen"])},
+    {id:uid(), name:"Ultimative Liste Kleidung Sommer", icon:"👗", items:mk("Kleidung Sommer",MUTTER_SOMMER)},
+    {id:uid(), name:"Ultimative Liste Kleidung Winter", icon:"🧣", items:mk("Kleidung Winter",MUTTER_WINTER)},
+    {id:uid(), name:"Ultimative Liste Vater", icon:"👨", items:mk("Vater",VATER)},
     {id:uid(), name:"Ultimative Kinderliste", icon:"🧸", items:markBad([
       ...mk("Kind – Kleidung Sommer",["Sonnenhut","Sonnenshirt","Sonnenbrille","Badesachen"]),
-      ...mk("Kind – Kleidung Winter",["Wintermütze","Anzug","Handschuhe","Winterschuhe","Schal / Loop"]),
-      ...mk("Kind – Kleidung allgemein",["Bodys","Schlafsack","Schlafanzug","Decke","Jacke","Schuhe","Hausschuhe","Regensachen","Socken","Hosen","Strumpfhosen","Tshirts","Kleider?","Handtuch","Mütze","Spucktücher"]),
-      ...mk("Kind – Badzeug",["Zinksalbe","Windeln","Feuchttücher (1 normales Pack und das Pack mit dem guten Verschluss)","Vitamin D","Fiebersenker","Zahnbürste","Zahnpasta","Schnuller","Fieberthermometer","2-3x Sonnencreme","Schwimmwindeln","Wickelunterlagen","Nasensauger"]),
+      ...mk("Kind – Kleidung Winter",["Wintermütze","Schneeanzug","Handschuhe","Winterschuhe","Schal / Loop"]),
+      ...mk("Kind – Kleidung allgemein",KIDS_ALLG_ORDER),
+      ...mk("Kind – Badzeug",["Zinksalbe","Windeln","Feuchttücher (1 normales Pack und das Pack mit dem guten Verschluss)","Vitamin D","Fiebersenker","Zahnbürste","Zahnpasta","Schnuller","Fieberthermometer","2-3x Sonnencreme","Schwimmwindeln","Wickelunterlagen","Nasensauger","Handtuch"]),
       ...mk("Kind – Küchenzeug",["Lätzchen","Löffel","Abendessen","Haferflocken","Mittagsgläschen","Snacks","Wasserflasche","Nuk Becher","Tücher zum Saubermachen","Milch","Bananen"]),
       ...mk("Kind – Spielzeug",["Bücher","Puppe","Kuscheltier"]),
       ...mk("Kind – Ausstattung",["Leuchtkugel","Sonnensegel","Kinderwagen","Trage","Babyfon","Regenschutz Kinderwagen","Babyschalenadapter","Kumja","Kopfkissen","Insektennetz","Reisebett"])
@@ -552,16 +591,123 @@ function upgradeV18(){
   const old = t.items[i], have = new Set(t.items.filter(x=>x.cat===old.cat).map(x=>x.text.toLowerCase()));
   t.items.splice(i, 1, ...["Sonnenhut","Mütze"].filter(x=>!have.has(x.toLowerCase())).map(text=>({id:uid(), text, cat:old.cat, ...(old.perKid?{perKid:true}:{})})));
 }
+// Version 19: Saisonlisten ohne „Kind“ – Kleidung nach „Kind – Kleidung“, Rest in den Wickelrucksack (pro Kind)
+function upgradeV19(){
+  ["Im Sommer einpacken","Im Herbst einpacken","Im Winter einpacken"].forEach(n=>{
+    const t = db.templates.find(x=>x.name===n && !x.share); if(!t) return;
+    const kid = t.items.filter(i=>i.cat==="Kind"); if(!kid.length) return;
+    t.items = t.items.filter(i=>i.cat!=="Kind");
+    const clothes = kid.filter(i=>SEASON_CLOTHES.includes(i.text)), rest = kid.filter(i=>!SEASON_CLOTHES.includes(i.text));
+    mergeItems(t.items, clothes.map(i=>({text:i.text, cat:SEASON_CLOTHES_CAT[n]})), false);
+    mergeItems(t.items, rest.map(i=>({text:i.text, cat:"Wickelrucksack", ...(SEASON_SHARED.includes(i.text)?{}:{perKid:true})})), false);
+    sortCats(t, ["Für uns",SEASON_CLOTHES_CAT[n],"Wickelrucksack","Kind – Ausstattung"]);
+  });
+}
+// Version 20: Kleidungskategorien wie in den anderen Vorlagen; Wickelrucksack ohne „Kind“
+function upgradeV20(){
+  Object.entries(SEASON_CLOTHES_CAT).forEach(([n,cat])=>{
+    const t = db.templates.find(x=>x.name===n && !x.share); if(!t) return;
+    t.items.forEach(i=>{ if(i.cat==="Kind – Kleidung") i.cat = cat; });
+    dedupe(t);
+  });
+  const w = db.templates.find(x=>x.name==="Wickelrucksack" && !x.share);
+  if(w){
+    const kid = w.items.filter(i=>i.cat==="Kind");
+    if(kid.length){
+      w.items = w.items.filter(i=>i.cat!=="Kind");
+      const toCat = {"Sonnenhut":"Kind – Kleidung Sommer","Mütze":"Kind – Kleidung allgemein"};
+      mergeItems(w.items, kid.filter(i=>toCat[i.text]).map(i=>({text:i.text, cat:toCat[i.text]})), false);
+      const pref = ["Wasserflasche","Snacks","Sonnencreme"], rk = t => { const i = pref.indexOf(t); return i<0 ? pref.length : i; };
+      mergeItems(w.items, kid.filter(i=>!toCat[i.text]).sort((a,b)=>rk(a.text)-rk(b.text)).map(i=>({text:i.text, cat:"Wickelrucksack", ...(SEASON_SHARED.includes(i.text)?{}:{perKid:true})})), false);
+      sortCats(w, ["Kind – Kleidung Sommer","Kind – Kleidung allgemein","Wickelrucksack","Für uns"]);
+    }
+  }
+}
+// Version 21: Vorlagen in Kategorien einsortieren (Für uns, Kinder, Unterwegs, Hund)
+function upgradeV21(){
+  db.templates.forEach(t=>{ if(!t.group && GROUP_OF[t.name]) t.group = GROUP_OF[t.name]; });
+}
+// Version 22: Kleidungsliste in vier Vorlagen, „Unterwegs“ → „Jahreszeiten“, Anzug → Schneeanzug
+const CLOTH_SPLIT = [
+  ["Kleidung allgemein","Ultimative Liste Kleidung allgemein","👕"],
+  ["Kleidung Sommer","Ultimative Liste Kleidung Sommer","👗"],
+  ["Kleidung Winter","Ultimative Liste Kleidung Winter","🧣"],
+  ["Vater","Ultimative Liste Vater","👨"]
+];
+function upgradeV22(){
+  const t = db.templates.find(x=>x.name==="Ultimative Liste Kleidung" && !x.share);
+  if(t){
+    let at = db.templates.indexOf(t);
+    const known = CLOTH_SPLIT.map(c=>c[0]);
+    CLOTH_SPLIT.forEach(([cat,name,icon])=>{
+      const items = t.items.filter(i => cat==="Kleidung allgemein" ? (i.cat===cat || !known.includes(i.cat)) : i.cat===cat);
+      if(!items.length || db.templates.some(x=>x.name===name)) return;
+      db.templates.splice(++at, 0, {id:uid(), name, icon, group:t.group||"Für uns", items:items.map(i=>({id:uid(), text:i.text, cat:i.cat, ...(i.perKid?{perKid:true}:{})}))});
+    });
+    db.templates.splice(db.templates.indexOf(t), 1);
+  }
+  db.templates.forEach(x=>{ if(x.group==="Unterwegs") x.group = x.name==="Therme" ? undefined : "Jahreszeiten"; if(x.group===undefined) delete x.group; });
+  const col = db.settings.collapsed; if(col){ const i = col.indexOf("Unterwegs"); if(i>=0) col[i] = "Jahreszeiten"; }
+  const k = db.templates.find(x=>x.name==="Ultimative Kinderliste" && !x.share);
+  if(k){ k.items.forEach(i=>{ if(i.text==="Anzug" && /^Kind – Kleidung/.test(i.cat||"")) i.text = "Schneeanzug"; }); dedupe(k); }
+}
+// Version 23: Schnuller pro Kind, neue Reihenfolge in Badzeug und Kleidung allgemein
+function upgradeV23(){
+  ["Reisen mit Baby (über Nacht)","Reisen mit Kleinkind (über Nacht)","Ultimative Kinderliste"].forEach(n=>{
+    const t = db.templates.find(x=>x.name===n && !x.share); if(!t) return;
+    t.items.forEach(i=>{ if(i.cat==="Kind – Badzeug" && i.text==="Schnuller") i.perKid = true; });
+    kidOrder(t);
+  });
+}
+// Version 24: Unterhosen in der Ultimativen Kinderliste
+function upgradeV24(){
+  const t = db.templates.find(x=>x.name==="Ultimative Kinderliste" && !x.share); if(!t) return;
+  const cat = "Kind – Kleidung allgemein";
+  if(t.items.some(i=>i.cat===cat && i.text.toLowerCase()==="unterhosen")) return;
+  const b = t.items.findIndex(i=>i.cat===cat && i.text==="Bodys");
+  const at = b>=0 ? b+1 : t.items.map(i=>i.cat).lastIndexOf(cat)+1 || t.items.length;
+  t.items.splice(at, 0, {id:uid(), text:"Unterhosen", cat});
+  kidOrder(t);
+}
+// Version 25: Kinderliste an die anderen Vorlagen angleichen, Schlafanzug bei Reisen mit Kleinkind
+function upgradeV25(){
+  const own = n => db.templates.find(x=>x.name===n && !x.share);
+  const k = own("Ultimative Kinderliste");
+  if(k){
+    const cat = "Kind – Kleidung allgemein", next = [];
+    k.items.forEach(i=>{
+      if(i.cat!==cat){ next.push(i); return; }
+      if(i.text==="Tshirts") i.text = "Oberteile";
+      if(i.text==="Kleider?") i.text = "Kleider";
+      if(i.text==="Handtuch"){ i.cat = "Kind – Badzeug"; next.push(i); return; }
+      if(i.text==="Regensachen"){ ["Matschhose","Regenjacke","Gummistiefel"].forEach(t=>next.push({id:uid(), text:t, cat})); return; }
+      next.push(i);
+    });
+    k.items = next; dedupe(k);
+    const sp = KIDS_ALLG_ORDER.indexOf("Spucktücher");
+    sortWithin(k, cat, t=>{ const r = KIDS_ALLG_ORDER.indexOf(t); return r<0 ? sp-0.5 : r; });   // eigene Einträge vor die Spucktücher
+    const firstBad = k.items.findIndex(i=>i.cat==="Kind – Badzeug"), h = k.items.findIndex(i=>i.text==="Handtuch" && i.cat==="Kind – Badzeug");
+    if(h>=0 && firstBad>=0 && h<firstBad){ const [it] = k.items.splice(h,1); k.items.splice(k.items.map(i=>i.cat).lastIndexOf("Kind – Badzeug")+1, 0, it); }
+    kidOrder(k);
+  }
+  const kk = own("Reisen mit Kleinkind (über Nacht)");
+  if(kk && !kk.items.some(i=>i.cat==="Kind – Kleidung allgemein" && i.text==="Schlafanzug")){
+    const s = kk.items.findIndex(i=>i.cat==="Kind – Kleidung allgemein" && i.text==="Schlafsack");
+    const at = s>=0 ? s+1 : kk.items.map(i=>i.cat).lastIndexOf("Kind – Kleidung allgemein")+1;
+    kk.items.splice(at, 0, {id:uid(), text:"Schlafanzug", cat:"Kind – Kleidung allgemein"});
+  }
+}
 function upgradeTemplates(){
   const v = db.tplVersion||1;
-  if(v >= 18) return;
+  if(v >= 25) return;
   if(v < 2){
     db.templates = db.templates.filter(t => t.share || OLD_EXAMPLES[t.name] !== t.items.map(i=>i.text).join("|"));
     const have = new Set(db.templates.map(t=>t.name));
     db.templates.unshift(...familyTemplates().filter(t=>!have.has(t.name)));
     db.events.concat(db.templates).forEach(o=>o.items.forEach(i=>{ i.cat=renamePeople(i.cat||"Sonstiges"); i.text=renamePeople(i.text); }));
     db.templates = db.templates.filter(t => t.share || !["Besuch bei den Großeltern","Urlaub Winter"].includes(t.name));
-    db.tplVersion = 18; return;
+    db.templates.forEach(t=>{ if(!t.group && GROUP_OF[t.name]) t.group = GROUP_OF[t.name]; });
+    db.tplVersion = 25; return;
   }
   if(v < 3){
     // Version 3: Namen → Mutter / Vater / Kind, neue Herbst- und Winter-Vorlage
@@ -585,16 +731,23 @@ function upgradeTemplates(){
   if(v < 15) upgradeV15();
   if(v < 16) upgradeV16();
   if(v < 17) upgradeV17();
-  upgradeV18();
-  db.tplVersion = 18;
+  if(v < 18) upgradeV18();
+  if(v < 19) upgradeV19();
+  if(v < 20) upgradeV20();
+  if(v < 21) upgradeV21();
+  if(v < 22) upgradeV22();
+  if(v < 23) upgradeV23();
+  if(v < 24) upgradeV24();
+  upgradeV25();
+  db.tplVersion = 25;
 }
 function defaultData(){
   return {
     templates:[
-      ...familyTemplates()
+      ...familyTemplates().map(t=>GROUP_OF[t.name] ? {...t, group:GROUP_OF[t.name]} : t)
     ],
     events:[],
-    tplVersion:18
+    tplVersion:25
   };
 }
 let db;
@@ -692,7 +845,7 @@ function renderEvents(hdr,main,bottom){
   if(!db.events.length){
     main.innerHTML = `<div class="empty"><div class="big">🧳</div>Noch keine Ereignisse.<br>Tippe auf <b>+</b>, um eine Packliste für ein Ereignis anzulegen.</div>`;
   } else {
-    main.innerHTML = searchBox("evSearch", evQuery, "Ereignisse und Einträge durchsuchen") + `<div id="evList"></div>`;
+    main.innerHTML = searchBox("evSearch", evQuery, "Ereignisse & Einträge suchen") + `<div id="evList"></div>`;
     wireSearch("evSearch", v=>evQuery=v, renderEvList);
     renderEvList();
   }
@@ -731,6 +884,38 @@ function renderEvList(){
 }
 
 let tplQuery = "";
+/* ---------- Vorlagen-Kategorien ---------- */
+const TPL_GROUPS = ["Kinder","Jahreszeiten","Für uns","Hund"];
+const GROUP_REST = "Weitere";
+const GROUP_OF = {
+  "Ultimative Badliste":"Für uns","Ultimative Liste Sonstiges":"Für uns","Ultimative Küchenliste":"Für uns",
+  "Ultimative Liste Kleidung allgemein":"Für uns","Ultimative Liste Kleidung Sommer":"Für uns","Ultimative Liste Kleidung Winter":"Für uns","Ultimative Liste Vater":"Für uns",
+  "Ultimative Kinderliste":"Kinder","Reisen mit Baby (über Nacht)":"Kinder","Reisen mit Kleinkind (über Nacht)":"Kinder","Wickelrucksack":"Kinder",
+  "Im Sommer einpacken":"Jahreszeiten","Im Herbst einpacken":"Jahreszeiten","Im Winter einpacken":"Jahreszeiten",
+  "Ultimative Hundeliste":"Hund"
+};
+function allGroups(){
+  const own = [...new Set(db.templates.map(t=>t.group).filter(g=>g && !TPL_GROUPS.includes(g)))].sort((a,b)=>a.localeCompare(b,"de"));
+  return [...TPL_GROUPS, ...own];
+}
+// Vorlagen nach Kategorie gruppieren: [[Gruppe, [Vorlagen…]], …] – leere Gruppen fallen weg, „Weitere“ zuletzt
+function groupedTemplates(){
+  const sorted = [...db.templates].sort((a,b)=>a.name.localeCompare(b.name,"de"));
+  const out = allGroups().map(g=>[g, sorted.filter(t=>t.group===g)]);
+  out.push([GROUP_REST, sorted.filter(t=>!t.group || !allGroups().includes(t.group))]);
+  return out.filter(([,l])=>l.length);
+}
+function toggleGroup(g){
+  const c = db.settings.collapsed ||= [];
+  const i = c.indexOf(g); if(i<0) c.push(g); else c.splice(i,1);
+  saveLocal(); renderTplList();
+}
+function groupField(cur){
+  return `<label class="f" for="pGroup">Kategorie</label>
+    <input type="text" id="pGroup" value="${esc(cur||"")}" list="grpList" placeholder="z. B. Für uns – leer = Weitere" autocomplete="off">
+    <datalist id="grpList">${allGroups().map(g=>`<option value="${esc(g)}">`).join("")}</datalist>`;
+}
+const readGroup = () => { const g = ($("#pGroup")?.value||"").trim(); return g && g!==GROUP_REST ? g : ""; };
 const fold = x => String(x||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ß/g,"ss");
 function hl(text, q){
   if(!q) return esc(text);
@@ -740,7 +925,7 @@ function hl(text, q){
 }
 function renderTemplates(hdr,main,bottom){
   hdr.innerHTML = `<h1>Vorlagen</h1><button class="iconbtn" onclick="joinDialog()" aria-label="Gemeinsamer Liste beitreten" title="Gemeinsamer Liste beitreten">${I.people}</button>`;
-  main.innerHTML = searchBox("tplSearch", tplQuery, "Vorlagen und Einträge durchsuchen") + `<div id="tplList"></div>`;
+  main.innerHTML = searchBox("tplSearch", tplQuery, "Vorlagen & Einträge suchen") + `<div id="tplList"></div>`;
   wireSearch("tplSearch", v=>tplQuery=v, renderTplList);
   renderTplList();
   bottom.innerHTML = `<button class="fab" onclick="newTemplateDialog()" aria-label="Neue Vorlage">${I.plus}</button>` + navBar("templates");
@@ -757,7 +942,17 @@ function renderTplList(){
       <div class="body"><div class="title">${hl(t.name,q)}</div>
       <div class="sub">${sub}</div></div>
     </div>`;
-  if(!q){ box.innerHTML = `<p class="hint">Allgemeine Listen, aus denen du Packlisten für Ereignisse erstellst.</p>` + sorted.map(t=>card(t, meta(t))).join(""); return; }
+  if(!q){
+    const col = db.settings.collapsed || [];
+    box.innerHTML = `<p class="hint">Allgemeine Listen, aus denen du Packlisten für Ereignisse erstellst.</p>` +
+      groupedTemplates().map(([g,l])=>{
+        const closed = col.includes(g);
+        return `<button type="button" class="grp ${closed?"closed":""}" onclick="toggleGroup(${esc(JSON.stringify(g))})" aria-expanded="${!closed}">
+            <span>${esc(g)}</span><small>${l.length}</small>${I.chev}</button>` +
+          (closed ? "" : l.map(t=>card(t, meta(t))).join(""));
+      }).join("");
+    return;
+  }
   const hits = sorted.map(t=>{
     const nameHit = fold(t.name).includes(q);
     const items = t.items.filter(i=>fold(i.text).includes(q) || fold(i.cat).includes(q));
@@ -999,7 +1194,7 @@ function editItem(kind,id){
 function listMenu(kind){
   const o=getObj(kind), isEv=kind==="event";
   dialog(`<h2>${esc(o.name)}</h2><div class="menu">
-    <button data-v="props">${I.edit}Name, Symbol${isEv?(o.kids&&o.kids.length?", Datum & Kinder":" & Datum"):""} ändern</button>
+    <button data-v="props">${I.edit}Name, Symbol${isEv?(o.kids&&o.kids.length?", Datum & Kinder":" & Datum"):" & Kategorie"} ändern</button>
     ${isEv?`<button data-v="reset">${I.reset}Alle wieder aktivieren</button>
             <button data-v="addtpl">${I.plus}Vorlage hinzufügen</button>
             <button data-v="totpl">${I.tpl}Als neue Vorlage speichern</button>
@@ -1044,6 +1239,7 @@ function propsDialog(kind,o){
     <label class="f">Name</label><input type="text" id="pName" value="${esc(o.name)}">
     ${isEv?`<label class="f">Datum</label><input type="date" id="pDate" value="${esc(o.date||"")}">`:""}
     ${isEv && o.kids && o.kids.length ? `<label class="f">Kinder</label>${o.kids.map((k,i)=>`<input type="text" id="pKid${i}" value="${esc(k)}" style="margin-bottom:6px" aria-label="Name Kind ${i+1}">`).join("")}` : ""}
+    ${isEv ? "" : groupField(o.group)}
     <label class="f">Symbol</label>${emojiPicker(o.icon)}
     <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Speichern</button></div>`,
   v=>{
@@ -1054,7 +1250,9 @@ function propsDialog(kind,o){
       if(new Set(names).size !== names.length){ toast("Jedes Kind braucht einen eigenen Namen"); return; }
       renameKids(o2, names);
     }
-    const n=$("#pName").value.trim(); if(n) o2.name=n; if(isEv) o2.date=$("#pDate").value; o2.icon=chosenEmoji(o2.icon); save(); render();
+    const n=$("#pName").value.trim(); if(n) o2.name=n; if(isEv) o2.date=$("#pDate").value; o2.icon=chosenEmoji(o2.icon);
+    if(!isEv){ const g = readGroup(); if(g) o2.group = g; else delete o2.group; }
+    save(); render();
   });
 }
 // Kinder umbenennen: Kategorien „Alt – X“ → „Neu – X“ (über Zwischennamen, damit Tausch „A↔B“ funktioniert)
@@ -1077,10 +1275,10 @@ function mergeItems(target, items, withDone){
   return target;
 }
 function tplPicker(pre){
-  return db.templates.length ? [...db.templates].sort((a,b)=>a.name.localeCompare(b.name,"de")).map(t=>`
+  return db.templates.length ? groupedTemplates().map(([g,l])=>`<div class="pick-h">${esc(g)}</div>` + l.map(t=>`
     <label class="tpl-pick"><input type="checkbox" value="${t.id}" ${t.id===pre?"checked":""}>
     <span style="font-size:1.3rem">${esc(t.icon||"📦")}</span><span style="flex:1">${esc(t.name)}</span>
-    <span class="sub" style="color:var(--muted);font-size:.8rem">${t.items.length}</span></label>`).join("")
+    <span class="sub" style="color:var(--muted);font-size:.8rem">${t.items.length}</span></label>`).join("")).join("")
   : `<p class="hint">Keine Vorlagen vorhanden – es wird eine leere Liste angelegt.</p>`;
 }
 /* ---------- Mehrere Kinder ----------
@@ -1088,7 +1286,7 @@ function tplPicker(pre){
    („Kind – Kleidung allgemein“ → „Kind 1 – …“, „Kind 2 – …“). Ausstattung und Badzeug teilen sich alle;
    darin erscheinen nur bestimmte Einträge pro Kind („Windeln (Kind 1)“, „Windeln (Kind 2)“). */
 const KID_SHARED = ["Kind – Ausstattung","Kind – Badzeug"];
-const PER_KID = ["Windeln","Fiebersenker","Zahnbürste","Zahnpasta"];   // Voreinstellung für „Kind – Badzeug“
+const PER_KID = ["Windeln","Fiebersenker","Zahnbürste","Zahnpasta","Schnuller"];   // Voreinstellung für „Kind – Badzeug“
 const isKidCat = c => (c==="Kind" || /^Kind – /.test(c)) && !KID_SHARED.includes(c);
 // Ein Eintrag „pro Kind“ steht in einer gemeinsamen Kategorie und wird bei mehreren Kindern je Kind angezeigt
 const isPerKid = i => !!i.perKid && !isKidCat(i.cat||"");
@@ -1287,6 +1485,7 @@ function pasteItemsDialog(kind){
 function newTemplateDialog(){
   dialog(`<h2>Neue Vorlage</h2>
     <label class="f">Name</label><input type="text" id="tName" placeholder="z. B. Camping">
+    ${groupField("")}
     <label class="f">Symbol</label>${emojiPicker("")}
     <label class="f">Einträge (optional, einer pro Zeile – Überschriften mit „- Einträgen“ darunter werden Kategorien)</label>
     <textarea id="tItems" rows="7" placeholder="Kleidung&#10;- Regenjacke&#10;- Socken&#10;Zelt"></textarea>
@@ -1294,7 +1493,8 @@ function newTemplateDialog(){
   v=>{
     if(v!=="ok") return; const name=$("#tName").value.trim(); if(!name) return;
     const items=parseItemsText($("#tItems").value);
-    const t={id:uid(),name,icon:chosenEmoji("📦"),items}; db.templates.push(t); save(); go({name:"template",id:t.id});
+    const t={id:uid(),name,icon:chosenEmoji("📦"),items}; const g=readGroup(); if(g) t.group=g;
+    db.templates.push(t); save(); go({name:"template",id:t.id});
   });
   setTimeout(()=>$("#tName")?.focus(),50);
 }
@@ -1386,20 +1586,21 @@ function ssave(o, m){ lsSet("sync." + o.id, m); }
 function norm(id, r){
   return id === "__p"
     ? {kind: r.kind === "template" ? "template" : "event", name: String(r.name || ""), icon: String(r.icon || ""), date: String(r.date || ""),
-       ...(Array.isArray(r.kids) && r.kids.length ? {kids: r.kids.map(String).slice(0,9)} : {})}
+       ...(Array.isArray(r.kids) && r.kids.length ? {kids: r.kids.map(String).slice(0,9)} : {}),
+       ...(r.group ? {group: String(r.group)} : {})}
     : {text: String(r.text || ""), cat: String(r.cat || "Sonstiges"), done: !!r.done, o: +r.o || 0, ...(r.perKid ? {perKid: true} : {})};
 }
 const sig = (id, r) => JSON.stringify(norm(id, r));
 function records(o){
   const isEv = kindOf(o) === "event";
-  const recs = {__p: norm("__p", {kind: isEv ? "event" : "template", name: o.name, icon: o.icon, date: isEv ? o.date : "", kids: isEv ? o.kids : null})};
+  const recs = {__p: norm("__p", {kind: isEv ? "event" : "template", name: o.name, icon: o.icon, date: isEv ? o.date : "", kids: isEv ? o.kids : null, group: isEv ? "" : (o.group||"")})};
   let max = 0; o.items.forEach(i=>{ if (typeof i.o === "number" && i.o > max) max = i.o; });
   o.items.forEach(i=>{ if (typeof i.o !== "number") i.o = ++max; recs[i.id] = norm(i.id, {...i, done: isEv && i.done}); });
   return recs;
 }
 function fromRecords(o, recs){
   const isEv = kindOf(o) === "event", p = recs.__p;
-  if (p){ if (p.name) o.name = p.name; if (p.icon) o.icon = p.icon; if (isEv){ o.date = p.date || ""; if (p.kids) o.kids = p.kids; else delete o.kids; } }
+  if (p){ if (p.name) o.name = p.name; if (p.icon) o.icon = p.icon; if (isEv){ o.date = p.date || ""; if (p.kids) o.kids = p.kids; else delete o.kids; } else { if (p.group) o.group = p.group; else delete o.group; } }
   o.items = Object.entries(recs).filter(([id])=>id !== "__p").sort((a, b)=>a[1].o - b[1].o)
     .map(([id, r])=>({id, text: r.text, cat: r.cat, o: r.o, ...(r.perKid ? {perKid: true} : {}), ...(isEv ? {done: !!r.done} : {})}));
 }
