@@ -241,7 +241,7 @@ function familyTemplates(){
     {id:uid(), name:"Reisen mit Baby (über Nacht)", icon:"👶", items:markBad(reisen(false))},
     {id:uid(), name:"Reisen mit Kleinkind (über Nacht)", icon:"🧒", items:markBad(reisen(true))},
     {id:uid(), name:"Wickelrucksack", icon:"🎒", items:[
-      ...mk("Kind",["Wasserflasche","Sonnencreme","Snacks","Sonnenhut / Mütze"]),
+      ...mk("Kind",["Wasserflasche","Sonnencreme","Snacks","Sonnenhut","Mütze"]),
       ...mkPer("Wickelrucksack",WR_CAT,WR_PER),
       ...mk("Für uns",["Wasserflasche","Snacks","Kopfschmerztabletten","Taschentücher"])
     ]},
@@ -545,16 +545,23 @@ function upgradeV17(){
     sortCats(t, ["Für uns","Kind","Wickelrucksack","Kind – Ausstattung"]);
   });
 }
+// Version 18: Wickelrucksack – Sonnenhut und Mütze getrennt
+function upgradeV18(){
+  const t = db.templates.find(x=>x.name==="Wickelrucksack" && !x.share); if(!t) return;
+  const i = t.items.findIndex(x=>x.text==="Sonnenhut / Mütze"); if(i<0) return;
+  const old = t.items[i], have = new Set(t.items.filter(x=>x.cat===old.cat).map(x=>x.text.toLowerCase()));
+  t.items.splice(i, 1, ...["Sonnenhut","Mütze"].filter(x=>!have.has(x.toLowerCase())).map(text=>({id:uid(), text, cat:old.cat, ...(old.perKid?{perKid:true}:{})})));
+}
 function upgradeTemplates(){
   const v = db.tplVersion||1;
-  if(v >= 17) return;
+  if(v >= 18) return;
   if(v < 2){
     db.templates = db.templates.filter(t => t.share || OLD_EXAMPLES[t.name] !== t.items.map(i=>i.text).join("|"));
     const have = new Set(db.templates.map(t=>t.name));
     db.templates.unshift(...familyTemplates().filter(t=>!have.has(t.name)));
     db.events.concat(db.templates).forEach(o=>o.items.forEach(i=>{ i.cat=renamePeople(i.cat||"Sonstiges"); i.text=renamePeople(i.text); }));
     db.templates = db.templates.filter(t => t.share || !["Besuch bei den Großeltern","Urlaub Winter"].includes(t.name));
-    db.tplVersion = 17; return;
+    db.tplVersion = 18; return;
   }
   if(v < 3){
     // Version 3: Namen → Mutter / Vater / Kind, neue Herbst- und Winter-Vorlage
@@ -577,8 +584,9 @@ function upgradeTemplates(){
   if(v < 14) upgradeV14();
   if(v < 15) upgradeV15();
   if(v < 16) upgradeV16();
-  upgradeV17();
-  db.tplVersion = 17;
+  if(v < 17) upgradeV17();
+  upgradeV18();
+  db.tplVersion = 18;
 }
 function defaultData(){
   return {
@@ -586,7 +594,7 @@ function defaultData(){
       ...familyTemplates()
     ],
     events:[],
-    tplVersion:17
+    tplVersion:18
   };
 }
 let db;
