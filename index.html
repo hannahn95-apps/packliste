@@ -210,6 +210,7 @@ const mk = (cat, list) => list.map(t => ({id:uid(), text:t, cat}));
 const mkPer = (cat, list, per) => list.map(t => ({id:uid(), text:t, cat, ...(per.includes(t)?{perKid:true}:{})}));
 const WR_CAT = ["Wechselkleidung","Wickelunterlagen","Windeln","Feuchttücher","Spucktücher","Schnuller"];
 const WR_PER = ["Wechselkleidung","Windeln","Schnuller"];
+const SEASON_WR = ["Wechselkleidung","Wickelunterlagen","Windeln","Feuchttücher"];
 
 const VATER = ["Kleidung","Schuhe","Jacke","Haarzeug","Zahnbürste"];
 const THERME = ["Handtücher","Bademantel","Saunalaken","2x Shampoo","Badeanzug","Badehose","Schwimmbrille","Kopfhörer","Buch","Äpfel","Anderes Essen","Wasserflasche","Badelatschen","Kuschelsocken","Frische Unterwäsche"];
@@ -246,17 +247,20 @@ function familyTemplates(){
     ]},
     {id:uid(), name:"Im Sommer einpacken", icon:"☀️", items:[
       ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Mücken Blitzdings","Wasserflasche","Sonnencreme","Schwimmsachen","Kopfhörer","Sonnenbrille"]),
-      ...mk("Kind",["Wasserflasche","Sonnenhut","Snacks","Windeln","Wickelunterlagen","Feuchttücher","Wechselkleidung","Sonnencreme","Sonnenshirt","Schwimmwindeln","Handtuch"]),
+      ...mk("Kind",["Wasserflasche","Sonnenhut","Snacks","Sonnencreme","Sonnenshirt","Schwimmwindeln","Handtuch"]),
+      ...mkPer("Wickelrucksack",SEASON_WR,WR_PER),
       ...mk("Kind – Ausstattung",["Sonnensegel","Sandspielzeug"])
     ]},
     {id:uid(), name:"Im Herbst einpacken", icon:"🍂", items:[
       ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Wasserflasche","Regenjacke","Regenschirm","Taschentücher","Kopfhörer"]),
-      ...mk("Kind",["Wasserflasche","Mütze","Matschhose","Gummistiefel","Regenjacke","Snacks","Windeln","Wickelunterlagen","Feuchttücher","Wechselkleidung"]),
+      ...mk("Kind",["Wasserflasche","Mütze","Matschhose","Gummistiefel","Regenjacke","Snacks"]),
+      ...mkPer("Wickelrucksack",SEASON_WR,WR_PER),
       ...mk("Kind – Ausstattung",["Regenschutz Kinderwagen","Sandspielzeug"])
     ]},
     {id:uid(), name:"Im Winter einpacken", icon:"❄️", items:[
       ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Wasserflasche","Mütze","Schal","Handschuhe","Kopfhörer","Taschentücher"]),
-      ...mk("Kind",["Wasserflasche","Schneeanzug","Wintermütze","Handschuhe","Winterschuhe","Snacks","Windeln","Wickelunterlagen","Feuchttücher","Wechselkleidung"]),
+      ...mk("Kind",["Wasserflasche","Schneeanzug","Wintermütze","Handschuhe","Winterschuhe","Snacks"]),
+      ...mkPer("Wickelrucksack",SEASON_WR,WR_PER),
       ...mk("Kind – Ausstattung",["Regenschutz Kinderwagen","Fußsack / Decke"])
     ]},
     {id:uid(), name:"Ultimative Küchenliste", icon:"🍳", items:[
@@ -532,16 +536,25 @@ function upgradeV16(){
   const t = db.templates.find(x=>x.name==="Im Herbst einpacken" && !x.share);
   if(t) tplOps(t).add("Kind – Ausstattung",["Sandspielzeug"]);
 }
+// Version 17: Saisonlisten mit Kategorie „Wickelrucksack“ wie die Wickelrucksack-Vorlage
+function upgradeV17(){
+  ["Im Sommer einpacken","Im Herbst einpacken","Im Winter einpacken"].forEach(n=>{
+    const t = db.templates.find(x=>x.name===n && !x.share); if(!t) return;
+    t.items = t.items.filter(i=>!(i.cat==="Kind" && SEASON_WR.includes(i.text)));
+    mergeItems(t.items, SEASON_WR.map(text=>({text, cat:"Wickelrucksack", ...(WR_PER.includes(text)?{perKid:true}:{})})), false);
+    sortCats(t, ["Für uns","Kind","Wickelrucksack","Kind – Ausstattung"]);
+  });
+}
 function upgradeTemplates(){
   const v = db.tplVersion||1;
-  if(v >= 16) return;
+  if(v >= 17) return;
   if(v < 2){
     db.templates = db.templates.filter(t => t.share || OLD_EXAMPLES[t.name] !== t.items.map(i=>i.text).join("|"));
     const have = new Set(db.templates.map(t=>t.name));
     db.templates.unshift(...familyTemplates().filter(t=>!have.has(t.name)));
     db.events.concat(db.templates).forEach(o=>o.items.forEach(i=>{ i.cat=renamePeople(i.cat||"Sonstiges"); i.text=renamePeople(i.text); }));
     db.templates = db.templates.filter(t => t.share || !["Besuch bei den Großeltern","Urlaub Winter"].includes(t.name));
-    db.tplVersion = 16; return;
+    db.tplVersion = 17; return;
   }
   if(v < 3){
     // Version 3: Namen → Mutter / Vater / Kind, neue Herbst- und Winter-Vorlage
@@ -563,8 +576,9 @@ function upgradeTemplates(){
   if(v < 13) upgradeV13();
   if(v < 14) upgradeV14();
   if(v < 15) upgradeV15();
-  upgradeV16();
-  db.tplVersion = 16;
+  if(v < 16) upgradeV16();
+  upgradeV17();
+  db.tplVersion = 17;
 }
 function defaultData(){
   return {
@@ -572,7 +586,7 @@ function defaultData(){
       ...familyTemplates()
     ],
     events:[],
-    tplVersion:16
+    tplVersion:17
   };
 }
 let db;
