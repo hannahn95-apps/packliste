@@ -78,6 +78,12 @@ nav button.active{color:var(--accent);font-weight:600}
 .item .del{display:none}
 .editing .item .del{display:grid}
 .editing .check{display:none}
+.handle{width:32px;height:40px;margin:-8px 0 -8px -6px;display:grid;place-items:center;flex:none;color:var(--muted);cursor:grab;touch-action:none}
+.handle svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.item.dragging{background:var(--accent-soft);box-shadow:0 4px 14px rgba(0,0,0,.18);position:relative;z-index:2;border-radius:10px}
+.is-dragging, .is-dragging *{user-select:none;-webkit-user-select:none;cursor:grabbing}
+#main .item{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.perkid{display:inline-block;font-size:.7rem;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:1px}
 .del{color:var(--danger)}
 .addbar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
   padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;gap:8px;z-index:6}
@@ -124,6 +130,8 @@ mark{background:transparent;color:var(--accent);font-weight:700}
 .menu button.red svg{color:var(--danger)}
 .ico{width:14px;height:14px;vertical-align:-2px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .shared svg{stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.emo-box{max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:4px 8px 10px;background:var(--card)}
+.emo-h{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:10px 2px 6px}
 .emojis{display:flex;flex-wrap:wrap;gap:6px}
 .emojis button{font-size:1.4rem;width:44px;height:44px;border-radius:10px;border:2px solid transparent;background:var(--bg);cursor:pointer}
 .emojis button.on{border-color:var(--accent)}
@@ -178,15 +186,30 @@ const I = {
   search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
   x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   kid:'<svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="3"/><path d="M8 21v-6l-2-4h12l-2 4v6"/><path d="M8 11l4 2 4-2"/></svg>',
+  grip:'<svg viewBox="0 0 24 24"><path d="M5 9h14M5 15h14"/></svg>',
   people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.4 0 4.1 1.5 4.5 4.5"/></svg>',
   gear:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 };
-const EMOJIS = ["🧳","☀️","🏖️","⛷️","❄️","👶","👵","🏕️","🚗","✈️","🚆","🏨","🎒","🏊","🥾","🎄","🎂","🏥","🐶","♨️","📦"];
+// Symbole für Vorlagen und Ereignisse, nach Themen gruppiert
+const EMOJI_GROUPS = [
+  ["Reisen",      ["🧳","🎒","✈️","🚗","🚆","🚢","🚲","🏕️","⛺","🏨","🏡","🗺️","🧭","🛂","🚐","⛽"]],
+  ["Jahreszeiten",["☀️","🌤️","🍂","❄️","🌧️","🌸","🌊","⛄"]],
+  ["Urlaub & Freizeit",["🏖️","🏝️","⛰️","🏔️","⛷️","🏂","🛷","🏊","🥾","🚴","🧗","🎣","♨️","🧖","🎡","🎢"]],
+  ["Familie",     ["👶","🧒","👧","👦","👩","👨","👵","👴","👪","🧸","🍼","🚼","🎈","🪁"]],
+  ["Haushalt & Pflege",["🍳","🍽️","🧺","🧴","🧼","🪥","🛁","💊","🩹","🏥","👗","👕","🩳","👟","🧦","🧣"]],
+  ["Anlässe",     ["🎄","🎂","🎁","💍","🎉","🥳","🎓","⛪","🐣","🎃"]],
+  ["Tiere",       ["🐶","🐕","🐾","🐱","🐴"]],
+  ["Sonstiges",   ["📦","📋","⭐","❤️","💼","🔧","📚","🎮","📷","🎵"]]
+];
+const EMOJIS = EMOJI_GROUPS.flatMap(g=>g[1]);
 
 /* ---------- Daten ---------- */
 const KEY = "packliste.v1";
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const mk = (cat, list) => list.map(t => ({id:uid(), text:t, cat}));
+const mkPer = (cat, list, per) => list.map(t => ({id:uid(), text:t, cat, ...(per.includes(t)?{perKid:true}:{})}));
+const WR_CAT = ["Wechselkleidung","Wickelunterlagen","Windeln","Feuchttücher","Spucktücher","Schnuller"];
+const WR_PER = ["Wechselkleidung","Windeln","Schnuller"];
 
 const VATER = ["Kleidung","Schuhe","Jacke","Haarzeug","Zahnbürste"];
 const THERME = ["Handtücher","Bademantel","Saunalaken","2x Shampoo","Badeanzug","Badehose","Schwimmbrille","Kopfhörer","Buch","Äpfel","Anderes Essen","Wasserflasche","Badelatschen","Kuschelsocken","Frische Unterwäsche"];
@@ -206,30 +229,35 @@ const KIND_ADD = {
 const WICKELRUCKSACK = ["Wasserflasche Kind","Wasserflasche Erwachsener","Wechselkleidung","Sonnencreme","Snack Kind","Snack Erwachsener","Wickelunterlage","Windeln","Feuchttücher","Kopfschmerztabletten","Taschentücher","Spucktuch","Schnuller","Sonnenhut / Mütze"];
 function familyTemplates(){
   const reisen = kleinkind => [
-    ...mk("Kind – Kleidung allgemein",["Bodys","Andere Anziehsachen",...(kleinkind?["Schuhe"]:[]),"Mütze","Schlafsack","Decke","Jacke","Spucktücher","Socken"]),
+    ...mk("Kind – Kleidung allgemein",["Bodys","Hosen","Oberteile","Unterhosen",...(kleinkind?["Schuhe"]:[]),"Mütze","Schlafsack","Decke","Jacke","Spucktücher","Socken"]),
     ...mk("Kind – Badzeug",["Zinksalbe","Windeln","Feuchttücher","Vitamin D","Fiebersenker","Nasensauger","Zahnbürste","Zahnpasta","Schnuller","Wickelunterlagen","Sonnencreme"]),
     ...(kleinkind?mk("Kind – Küchenzeug",["Lätzchen","Löffel","Milch","Haferflocken","Bananen","Anderes Essen","Wasserflasche"]):[]),
     ...mk("Kind – Ausstattung",["Kinderwagen","Regenschutz Kinderwagen","Babyschalenadapter","Trage","Kumja","Babyfon","Spielzeug","Leuchtkugel","Stillkissen",...(kleinkind?[]:["Nestchen"]),"Kopfkissen","Sonnensegel","Insektennetz"]),
     ...mk("Für uns",["Wasserflasche","Kopfhörer","Portmonnaie","Ladekabel","Buch","Pille","Kleidung","Kopfschmerztabletten"])
   ];
+  const markBad = items => items.map(i => i.cat==="Kind – Badzeug" && PER_KID.includes(i.text) ? {...i, perKid:true} : i);
   return [
-    {id:uid(), name:"Reisen mit Baby (über Nacht)", icon:"👶", items:reisen(false)},
-    {id:uid(), name:"Reisen mit Kleinkind (über Nacht)", icon:"🧒", items:reisen(true)},
+    {id:uid(), name:"Reisen mit Baby (über Nacht)", icon:"👶", items:markBad(reisen(false))},
+    {id:uid(), name:"Reisen mit Kleinkind (über Nacht)", icon:"🧒", items:markBad(reisen(true))},
     {id:uid(), name:"Wickelrucksack", icon:"🎒", items:[
-      ...mk("Kind",["Wasserflasche","Wechselkleidung","Sonnencreme","Snacks","Wickelunterlagen","Windeln","Feuchttücher","Spucktücher","Schnuller","Sonnenhut / Mütze"]),
+      ...mk("Kind",["Wasserflasche","Sonnencreme","Snacks","Sonnenhut / Mütze"]),
+      ...mkPer("Wickelrucksack",WR_CAT,WR_PER),
       ...mk("Für uns",["Wasserflasche","Snacks","Kopfschmerztabletten","Taschentücher"])
     ]},
     {id:uid(), name:"Im Sommer einpacken", icon:"☀️", items:[
       ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Mücken Blitzdings","Wasserflasche","Sonnencreme","Schwimmsachen","Kopfhörer","Sonnenbrille"]),
-      ...mk("Kind",["Wasserflasche","Sonnenhut","Snacks","Windeln","Wickelunterlagen","Feuchttücher","Wechselkleidung","Sonnencreme","Sonnenshirt","Schwimmwindeln","Handtuch","Sandspielzeug"])
+      ...mk("Kind",["Wasserflasche","Sonnenhut","Snacks","Windeln","Wickelunterlagen","Feuchttücher","Wechselkleidung","Sonnencreme","Sonnenshirt","Schwimmwindeln","Handtuch"]),
+      ...mk("Kind – Ausstattung",["Sonnensegel","Sandspielzeug"])
     ]},
     {id:uid(), name:"Im Herbst einpacken", icon:"🍂", items:[
       ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Wasserflasche","Regenjacke","Regenschirm","Taschentücher","Kopfhörer"]),
-      ...mk("Kind",["Wasserflasche","Mütze","Matschhose","Gummistiefel","Regenjacke","Regenschutz Kinderwagen","Snacks","Windeln","Wickelunterlagen","Feuchttücher","Wechselkleidung"])
+      ...mk("Kind",["Wasserflasche","Mütze","Matschhose","Gummistiefel","Regenjacke","Snacks","Windeln","Wickelunterlagen","Feuchttücher","Wechselkleidung"]),
+      ...mk("Kind – Ausstattung",["Regenschutz Kinderwagen","Sandspielzeug"])
     ]},
     {id:uid(), name:"Im Winter einpacken", icon:"❄️", items:[
-      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Wasserflasche","Mütze","Schal","Handschuhe","Thermoskanne mit Tee","Kopfhörer","Taschentücher"]),
-      ...mk("Kind",["Wasserflasche","Schneeanzug","Wintermütze","Handschuhe","Winterschuhe","Fußsack / Decke","Snacks","Windeln","Wickelunterlagen","Feuchttücher","Wechselkleidung"])
+      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Wasserflasche","Mütze","Schal","Handschuhe","Kopfhörer","Taschentücher"]),
+      ...mk("Kind",["Wasserflasche","Schneeanzug","Wintermütze","Handschuhe","Winterschuhe","Snacks","Windeln","Wickelunterlagen","Feuchttücher","Wechselkleidung"]),
+      ...mk("Kind – Ausstattung",["Regenschutz Kinderwagen","Fußsack / Decke"])
     ]},
     {id:uid(), name:"Ultimative Küchenliste", icon:"🍳", items:[
       ...mk("Küchenutensilien",["Messer","Clips","Ziplock bags","Salz","Tupperdose","Geschirrhandtuch","Müllbeutel","Teller","Schälchen","Zewa","Spüli","Schwamm","Spülmaschinentabs","Brotdosen"])
@@ -240,7 +268,7 @@ function familyTemplates(){
       ...mk("Kleidung allgemein",["Kleider","Rock","Unterwäsche","Socken","BH","Reisehandtuch","Wäschenetz","Jeans","Jogginghose","Tshirts","Pullover","Schlafsachen","Strumpfhosen"]),
       ...mk("Vater",VATER)
     ]},
-    {id:uid(), name:"Ultimative Kinderliste", icon:"🧸", items:[
+    {id:uid(), name:"Ultimative Kinderliste", icon:"🧸", items:markBad([
       ...mk("Kind – Kleidung Sommer",["Sonnenhut","Sonnenshirt","Sonnenbrille","Badesachen"]),
       ...mk("Kind – Kleidung Winter",["Wintermütze","Anzug","Handschuhe","Winterschuhe","Schal / Loop"]),
       ...mk("Kind – Kleidung allgemein",["Bodys","Schlafsack","Schlafanzug","Decke","Jacke","Schuhe","Hausschuhe","Regensachen","Socken","Hosen","Strumpfhosen","Tshirts","Kleider?","Handtuch","Mütze","Spucktücher"]),
@@ -248,7 +276,7 @@ function familyTemplates(){
       ...mk("Kind – Küchenzeug",["Lätzchen","Löffel","Abendessen","Haferflocken","Mittagsgläschen","Snacks","Wasserflasche","Nuk Becher","Tücher zum Saubermachen","Milch","Bananen"]),
       ...mk("Kind – Spielzeug",["Bücher","Puppe","Kuscheltier"]),
       ...mk("Kind – Ausstattung",["Leuchtkugel","Sonnensegel","Kinderwagen","Trage","Babyfon","Regenschutz Kinderwagen","Babyschalenadapter","Kumja","Kopfkissen","Insektennetz","Reisebett"])
-    ]},
+    ])},
     {id:uid(), name:"Ultimative Hundeliste", icon:"🐶", items:[
       ...mk("Scotty",["Futter","Näpfe","Reisepass","Leinen","Leuchthalsband","Kacktüten","Ball","Körbchen","Kühlmatte","Wintermantel"])
     ]},
@@ -450,16 +478,70 @@ function upgradeV10(){
 function upgradeV11(){
   if(!db.templates.some(t=>t.name==="Therme")) db.templates.push({id:uid(), name:"Therme", icon:"♨️", items:mk("Therme",THERME)});
 }
+// Version 12: Einträge „pro Kind“ markieren, Wickelrucksack mit eigener Kategorie
+function upgradeV12(){
+  db.templates.forEach(t=>{
+    if(t.share) return;
+    t.items.forEach(i=>{ if(i.cat==="Kind – Badzeug" && PER_KID.some(x=>x.toLowerCase()===i.text.toLowerCase())) i.perKid = true; });
+  });
+  const w = db.templates.find(t=>t.name==="Wickelrucksack" && !t.share);
+  if(w){
+    w.items.forEach(i=>{ if(i.cat==="Kind" && WR_CAT.includes(i.text)){ i.cat = "Wickelrucksack"; if(WR_PER.includes(i.text)) i.perKid = true; } });
+    sortCats(w, ["Kind","Wickelrucksack","Für uns"]);
+    w.items.sort((a,b)=> a.cat==="Wickelrucksack" && b.cat==="Wickelrucksack" ? WR_CAT.indexOf(a.text)-WR_CAT.indexOf(b.text) : 0);
+  }
+}
+// Version 13: Anziehsachen aufteilen, Ausstattung in Herbst/Winter, Thermoskanne raus
+function upgradeV13(){
+  const own = n => db.templates.find(t=>t.name===n && !t.share);
+  ["Reisen mit Baby (über Nacht)","Reisen mit Kleinkind (über Nacht)"].forEach(n=>{
+    const t = own(n); if(!t) return;
+    const i = t.items.findIndex(x=>x.text==="Andere Anziehsachen"); if(i<0) return;
+    const cat = t.items[i].cat, have = new Set(t.items.filter(x=>x.cat===cat).map(x=>x.text.toLowerCase()));
+    t.items.splice(i, 1, ...["Hosen","Oberteile","Unterhosen"].filter(x=>!have.has(x.toLowerCase())).map(text=>({id:uid(), text, cat})));
+  });
+  const herbst = own("Im Herbst einpacken");
+  if(herbst){
+    const r = herbst.items.find(x=>x.cat==="Kind" && x.text==="Regenschutz Kinderwagen");
+    if(r) herbst.items = herbst.items.filter(x=>x!==r);
+    tplOps(herbst).add("Kind – Ausstattung",["Regenschutz Kinderwagen"]);
+  }
+  const winter = own("Im Winter einpacken");
+  if(winter){ const o = tplOps(winter); o.del("Thermoskanne mit Tee","Für uns"); o.add("Kind – Ausstattung",["Regenschutz Kinderwagen"]); }
+}
+// Version 14: Sonnensegel im Sommer, Fußsack im Winter zur Ausstattung
+function upgradeV14(){
+  const own = n => db.templates.find(t=>t.name===n && !t.share);
+  const sommer = own("Im Sommer einpacken"); if(sommer) tplOps(sommer).add("Kind – Ausstattung",["Sonnensegel"]);
+  const winter = own("Im Winter einpacken");
+  if(winter){
+    const f = winter.items.find(x=>x.cat==="Kind" && x.text==="Fußsack / Decke");
+    if(f) winter.items = winter.items.filter(x=>x!==f);
+    tplOps(winter).add("Kind – Ausstattung",["Fußsack / Decke"]);
+  }
+}
+// Version 15: Sandspielzeug im Sommer zur Ausstattung
+function upgradeV15(){
+  const t = db.templates.find(x=>x.name==="Im Sommer einpacken" && !x.share); if(!t) return;
+  const it = t.items.find(x=>x.cat==="Kind" && x.text==="Sandspielzeug");
+  if(it) t.items = t.items.filter(x=>x!==it);
+  tplOps(t).add("Kind – Ausstattung",["Sandspielzeug"]);
+}
+// Version 16: Sandspielzeug auch im Herbst
+function upgradeV16(){
+  const t = db.templates.find(x=>x.name==="Im Herbst einpacken" && !x.share);
+  if(t) tplOps(t).add("Kind – Ausstattung",["Sandspielzeug"]);
+}
 function upgradeTemplates(){
   const v = db.tplVersion||1;
-  if(v >= 11) return;
+  if(v >= 16) return;
   if(v < 2){
     db.templates = db.templates.filter(t => t.share || OLD_EXAMPLES[t.name] !== t.items.map(i=>i.text).join("|"));
     const have = new Set(db.templates.map(t=>t.name));
     db.templates.unshift(...familyTemplates().filter(t=>!have.has(t.name)));
     db.events.concat(db.templates).forEach(o=>o.items.forEach(i=>{ i.cat=renamePeople(i.cat||"Sonstiges"); i.text=renamePeople(i.text); }));
     db.templates = db.templates.filter(t => t.share || !["Besuch bei den Großeltern","Urlaub Winter"].includes(t.name));
-    db.tplVersion = 11; return;
+    db.tplVersion = 16; return;
   }
   if(v < 3){
     // Version 3: Namen → Mutter / Vater / Kind, neue Herbst- und Winter-Vorlage
@@ -476,8 +558,13 @@ function upgradeTemplates(){
   if(v < 8) upgradeV8();
   if(v < 9) upgradeV9();
   if(v < 10) upgradeV10();
-  upgradeV11();
-  db.tplVersion = 11;
+  if(v < 11) upgradeV11();
+  if(v < 12) upgradeV12();
+  if(v < 13) upgradeV13();
+  if(v < 14) upgradeV14();
+  if(v < 15) upgradeV15();
+  upgradeV16();
+  db.tplVersion = 16;
 }
 function defaultData(){
   return {
@@ -485,7 +572,7 @@ function defaultData(){
       ...familyTemplates()
     ],
     events:[],
-    tplVersion:11
+    tplVersion:16
   };
 }
 let db;
@@ -494,7 +581,7 @@ function load(){
   if(!db || !Array.isArray(db.templates)) db = defaultData();
   db.events ||= [];
   db.settings ||= {hideDone:false};
-  upgradeTemplates(); saveLocal();
+  upgradeTemplates(); migrateKidBadzeug(); markPerKid(); saveLocal();
 }
 function saveLocal(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){ toast("Speichern fehlgeschlagen"); } }
 function save(){ saveLocal(); db.events.concat(db.templates).forEach(o=>{ if(o.share) syncTouched(o); }); }
@@ -538,7 +625,9 @@ window.addEventListener("popstate", ()=>{ if(view.name==="event") go({name:"even
 function back(){ if(history.state && history.state.d) history.back(); else go({name: view.name==="event"?"events":"templates"}); }
 
 /* ---------- Rendern ---------- */
+let drag = null, renderPending = false;
 function render(){
+  if(drag){ renderPending = true; return; }       // während des Ziehens nicht neu zeichnen
   const hdr=$("#hdr"), main=$("#main"), bottom=$("#bottom");
   const ni=$("#newItem"), keep = ni ? {id:view.id, v:ni.value, f:document.activeElement===ni} : null;
   renderView(hdr,main,bottom);
@@ -699,7 +788,7 @@ function renderList(hdr,main,bottom,kind){
     html += `${o.share?`<div class="progress">${sharedLine(o)}</div>`:""}<p class="hint">Änderungen hier wirken nur auf künftige Ereignisse.</p>
       <div class="toggle"><span class="chip on" onclick="newEventDialog('${o.id}')">＋ Ereignis aus dieser Vorlage</span></div>`;
   }
-  if(editing) html += `<p class="hint">Bearbeitungsmodus: Eintrag antippen zum Ändern, 🗑 zum Löschen.</p>`;
+  if(editing) html += `<p class="hint">Bearbeitungsmodus: Am Griff ${I.grip.replace("<svg",'<svg class="ico"')} ziehen zum Verschieben (auch in eine andere Kategorie), Eintrag antippen zum Ändern, Papierkorb zum Löschen. Tipp: Auch ohne Bearbeitungsmodus lässt sich ein Eintrag verschieben – kurz gedrückt halten und ziehen.</p>`;
   const list = cats(o.items);
   let shown = 0;
   list.forEach(c=>{
@@ -708,11 +797,12 @@ function renderList(hdr,main,bottom,kind){
     if(isEv && db.settings.hideDone && !editing) items = items.filter(i=>!i.done);
     if(!items.length) return;
     shown += items.length;
-    if(isEv) items = [...items.filter(i=>!i.done), ...items.filter(i=>i.done)];
-    html += `<div class="group ${editing?"editing":""}"><h3>${esc(c)}${isEv?`<span>${doneN}/${total}</span>`:`<span>${total}</span>`}</h3>` +
-      items.map(i=>`<div class="item ${isEv&&i.done?"done":""}">
+    if(isEv && !editing) items = [...items.filter(i=>!i.done), ...items.filter(i=>i.done)];   // beim Bearbeiten echte Reihenfolge zeigen
+    html += `<div class="group ${editing?"editing":""}" data-cat="${esc(c)}"><h3>${esc(c)}${isEv?`<span>${doneN}/${total}</span>`:`<span>${total}</span>`}</h3>` +
+      items.map(i=>`<div class="item ${isEv&&i.done?"done":""}" data-id="${i.id}">
+        ${editing?`<span class="handle" aria-label="Verschieben">${I.grip}</span>`:""}
         ${isEv?`<div class="check" onclick="toggleItem('${i.id}')">${I.check}</div>`:""}
-        <div class="txt" onclick="${editing||!isEv?`editItem('${kind}','${i.id}')`:`toggleItem('${i.id}')`}">${esc(i.text)}</div>
+        <div class="txt" onclick="${editing||!isEv?`editItem('${kind}','${i.id}')`:`toggleItem('${i.id}')`}">${esc(i.text)}${!isEv && i.perKid && !isKidCat(i.cat||"") ? ` <span class="perkid">pro Kind</span>` : ""}</div>
         <button class="iconbtn del" onclick="delItem('${kind}','${i.id}')" aria-label="Löschen">${I.trash}</button>
       </div>`).join("") + `</div>`;
   });
@@ -725,6 +815,88 @@ function renderList(hdr,main,bottom,kind){
     <select id="newCat" onchange="catChange(this)">${opts}</select>
     <button type="submit" aria-label="Hinzufügen">＋</button></form>`;
 }
+
+/* ---------- Einträge verschieben ----------
+   Im Bearbeitungsmodus sofort am Griff ═, sonst: Eintrag kurz gedrückt halten und ziehen. */
+let longPress = null, swallowClick = false;
+function startDrag(row, pointerId, y, captureEl){
+  drag = {row, id:pointerId, y, timer:null};
+  row.classList.add("dragging"); document.body.classList.add("is-dragging");
+  try{ captureEl.setPointerCapture(pointerId); }catch(_){}
+  const scroll = ()=>{                                   // am Rand automatisch scrollen
+    if(!drag) return;
+    const yy = drag.y, H = innerHeight;
+    if(yy < 110) scrollBy(0, -Math.ceil((110-yy)/6)); else if(yy > H-150) scrollBy(0, Math.ceil((yy-(H-150))/6));
+    moveTo(yy); drag.timer = requestAnimationFrame(scroll);
+  };
+  drag.timer = requestAnimationFrame(scroll);
+}
+document.addEventListener("pointerdown", e=>{
+  if(view.name!=="event" && view.name!=="template") return;
+  const h = e.target.closest(".handle");
+  if(h && editing){ const row = h.closest(".item"); if(row){ e.preventDefault(); startDrag(row, e.pointerId, e.clientY, h); } return; }
+  const row = e.target.closest("#main .item"); if(!row || e.target.closest(".del") || e.button>0) return;
+  clearTimeout(longPress?.t);
+  longPress = {row, id:e.pointerId, x:e.clientX, y:e.clientY, t:setTimeout(()=>{
+    if(!longPress) return;
+    const lp = longPress; longPress = null; swallowClick = true;
+    try{ navigator.vibrate && navigator.vibrate(15); }catch(_){}
+    startDrag(lp.row, lp.id, lp.y, lp.row);
+  }, 450)};
+});
+document.addEventListener("click", e=>{ if(swallowClick){ swallowClick = false; e.stopPropagation(); e.preventDefault(); } }, true);
+document.addEventListener("contextmenu", e=>{ if(drag || longPress) e.preventDefault(); });
+document.addEventListener("touchmove", e=>{ if(drag) e.preventDefault(); }, {passive:false});
+function moveTo(y){
+  const row = drag.row, main = $("#main");
+  const rows = [...main.querySelectorAll(".item")].filter(r=>r!==row);
+  for(const r of rows){
+    const b = r.getBoundingClientRect();
+    if(y >= b.top && y <= b.bottom){
+      const before = y < b.top + b.height/2;
+      if(before && r.previousElementSibling !== row) r.before(row);
+      else if(!before && r.nextElementSibling !== row) r.after(row);
+      return;
+    }
+  }
+  for(const g of main.querySelectorAll(".group")){       // auf eine Überschrift: an den Anfang der Kategorie
+    const h = g.querySelector("h3"), b = h.getBoundingClientRect();
+    if(y >= b.top && y <= b.bottom && h.nextElementSibling !== row){ h.after(row); return; }
+  }
+}
+document.addEventListener("pointermove", e=>{
+  if(longPress && e.pointerId===longPress.id && Math.hypot(e.clientX-longPress.x, e.clientY-longPress.y) > 10){ clearTimeout(longPress.t); longPress = null; }
+  if(drag && e.pointerId===drag.id){ drag.y = e.clientY; e.preventDefault(); }
+}, {passive:false});
+function endDrag(e){
+  if(longPress && (!e || e.pointerId===longPress.id)){ clearTimeout(longPress.t); longPress = null; }
+  if(!drag || (e && e.pointerId!==drag.id)) return;
+  cancelAnimationFrame(drag.timer);
+  const kind = view.name, o = getObj(kind);
+  drag.row.classList.remove("dragging"); document.body.classList.remove("is-dragging");
+  drag = null;
+  setTimeout(()=>{ swallowClick = false; }, 50);
+  if(o){
+    // Reihenfolge je Kategorie aus der Anzeige übernehmen; ausgeblendete (erledigte) Einträge bleiben in ihrer Kategorie
+    const byId = new Map(o.items.map(i=>[i.id,i])), dom = new Map(), placed = new Set();
+    $("#main").querySelectorAll(".group").forEach(g=>{
+      const ids = [...g.querySelectorAll(".item")].map(r=>r.dataset.id).filter(id=>byId.has(id));
+      dom.set(g.dataset.cat, ids); ids.forEach(id=>placed.add(id));
+    });
+    const next = [];
+    cats(o.items).forEach(c=>{
+      (dom.get(c)||[]).forEach(id=>{ const it = byId.get(id); it.cat = c; next.push(it); });
+      o.items.forEach(it=>{ if((it.cat||"Sonstiges")===c && !placed.has(it.id) && !next.includes(it)) next.push(it); });
+    });
+    o.items.forEach(it=>{ if(!next.includes(it)) next.push(it); });   // Sicherheitsnetz
+    const changed = next.some((it,i)=>it!==o.items[i]) || renderPending;
+    o.items = next; o.items.forEach((it,i)=>{ it.o = i+1; });
+    if(changed) save();
+  }
+  renderPending = false; render();
+}
+document.addEventListener("pointerup", endDrag);
+document.addEventListener("pointercancel", endDrag);
 
 /* ---------- Aktionen Liste ---------- */
 let lastCat = "Sonstiges";
@@ -765,19 +937,40 @@ function undo(msg,fn){ undoFn=fn; const t=$("#toast"); t.innerHTML=esc(msg)+` ·
 function doUndo(){ if(undoFn){undoFn(); undoFn=null;} $("#toast").classList.remove("show"); }
 
 function editItem(kind,id){
-  const o=getObj(kind), cur=o.items.find(x=>x.id===id);
+  const o=getObj(kind), cur=o.items.find(x=>x.id===id), isEv = kind==="event";
+  const kids = isEv ? (o.kids||[]) : [];
+  const owner = cur.perKid ? kids.find(k=>kidSuffix(cur.text,k)) : null;
+  const shownText = owner ? baseText(cur.text, owner) : cur.text;
   dialog(`<h2>Eintrag bearbeiten</h2>
-    <label class="f">Text</label><input type="text" id="eText" value="${esc(cur.text)}">
+    <label class="f">Text</label><input type="text" id="eText" value="${esc(shownText)}">
+    ${owner?`<p class="hint" style="margin:4px 0 0">Gilt für ${esc(owner)}. Der Name in Klammern wird automatisch angehängt.</p>`:""}
     <label class="f">Kategorie</label><input type="text" id="eCat" value="${esc(cur.cat||"Sonstiges")}" list="catList">
     <datalist id="catList">${allCats().map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
+    <label class="tpl-pick" style="border:0;margin-top:8px"><input type="checkbox" id="ePer" ${cur.perKid?"checked":""}>
+      <span style="flex:1"><b>Pro Kind</b><br><span class="hint" style="margin:0">Bei mehreren Kindern erscheint der Eintrag einmal je Kind, z. B. „${esc(shownText)} (Kind 1)“. In Kind-Kategorien wie „Kind – Kleidung“ gilt das ohnehin.</span></span></label>
     <div class="actions"><button class="btn danger" data-v="del">Löschen</button><span style="flex:1"></span>
     <button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Speichern</button></div>`,
   v=>{
     if(v==="del"){ delItem(kind,id); return; }
     if(v!=="ok") return;
     const t=$("#eText").value.trim(); if(!t) return;
-    const it=getObj(kind)?.items.find(x=>x.id===id); if(!it){ toast("Eintrag wurde inzwischen gelöscht"); return; }
-    it.text=t; it.cat=$("#eCat").value.trim()||"Sonstiges"; save(); render();
+    const o2=getObj(kind), it=o2?.items.find(x=>x.id===id); if(!it){ toast("Eintrag wurde inzwischen gelöscht"); return; }
+    const cat=$("#eCat").value.trim()||"Sonstiges", per=$("#ePer").checked;
+    it.text = owner ? kidText(t, owner) : t; it.cat = cat;
+    const k2 = isEv ? (o2.kids||[]) : [];
+    if(isEv && k2.length>1 && per !== !!it.perKid){
+      if(per){                                          // auf alle Kinder verteilen
+        const idx = o2.items.indexOf(it);
+        o2.items.splice(idx, 1, ...k2.map((k,n)=>({id: n===0 ? it.id : uid(), text:kidText(it.text,k), cat, perKid:true, done: n===0 ? !!it.done : false})));
+      } else {                                          // zu einem Eintrag zusammenfassen
+        const base = owner ? t : it.text;
+        const sibs = o2.items.filter(x=>x.cat===cat && x.perKid && k2.some(k=>x.text===kidText(base,k)));
+        const first = sibs[0] || it, keep = {...first, text:base, done: sibs.length ? sibs.every(x=>x.done) : !!it.done};
+        delete keep.perKid;
+        o2.items = o2.items.filter(x=>!sibs.includes(x) || x===first).map(x=>x===first ? keep : x);
+      }
+    } else if(per) it.perKid = true; else delete it.perKid;
+    save(); render();
   });
 }
 
@@ -816,7 +1009,9 @@ function listMenu(kind){
 }
 
 function emojiPicker(sel){
-  return `<div class="emojis" id="emo">${EMOJIS.map(e=>`<button type="button" class="${e===sel?"on":""}" onclick="pickEmoji(this)">${e}</button>`).join("")}</div>`;
+  const btn = e => `<button type="button" class="${e===sel?"on":""}" onclick="pickEmoji(this)" aria-label="Symbol ${e}">${e}</button>`;
+  const own = sel && !EMOJIS.includes(sel) ? `<div class="emo-h">Aktuell</div><div class="emojis">${btn(sel)}</div>` : "";
+  return `<div class="emo-box" id="emo">${own}${EMOJI_GROUPS.map(([t,l])=>`<div class="emo-h">${esc(t)}</div><div class="emojis">${l.map(btn).join("")}</div>`).join("")}</div>`;
 }
 function pickEmoji(b){ document.querySelectorAll("#emo button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); }
 function chosenEmoji(def){ const b=document.querySelector("#emo button.on"); return b?b.textContent:def; }
@@ -847,6 +1042,7 @@ function renameKids(o, names){
   const tmp = old.map((_,i)=>"\u0000"+i);
   o.items.forEach(it=>{ const i = old.findIndex(k=>ofKid(it.cat||"",k)); if(i>=0) it.cat = tmp[i] + it.cat.slice(old[i].length); });
   o.items.forEach(it=>{ const m = /^\u0000(\d+)/.exec(it.cat||""); if(m) it.cat = names[+m[1]] + it.cat.slice(m[0].length); });
+  o.items.forEach(it=>{ if(!it.perKid) return; const i = old.findIndex(k=>kidSuffix(it.text,k)); if(i>=0) it.text = kidText(baseText(it.text, old[i]), names[i]); });
   o.kids = names;
 }
 
@@ -855,7 +1051,7 @@ function mergeItems(target, items, withDone){
   const key = i => (i.cat||"Sonstiges").toLowerCase()+"|"+i.text.toLowerCase();
   const have = new Set(target.map(key));
   items.forEach(i=>{ if(have.has(key(i))) return; have.add(key(i));
-    target.push({id:uid(), text:i.text, cat:i.cat||"Sonstiges", ...(withDone?{done:false}:{})}); });
+    target.push({id:uid(), text:i.text, cat:i.cat||"Sonstiges", ...(i.perKid?{perKid:true}:{}), ...(withDone?{done:false}:{})}); });
   return target;
 }
 function tplPicker(pre){
@@ -867,11 +1063,18 @@ function tplPicker(pre){
 }
 /* ---------- Mehrere Kinder ----------
    Vorlagen haben ein „Kind“. In einer Packliste werden die Kind-Kategorien pro Kind angelegt
-   („Kind – Badzeug“ → „Kind 1 – Badzeug“, „Kind 2 – Badzeug“); die Ausstattung teilen sich alle. */
-const KID_SHARED = ["Kind – Ausstattung"];
+   („Kind – Kleidung allgemein“ → „Kind 1 – …“, „Kind 2 – …“). Ausstattung und Badzeug teilen sich alle;
+   darin erscheinen nur bestimmte Einträge pro Kind („Windeln (Kind 1)“, „Windeln (Kind 2)“). */
+const KID_SHARED = ["Kind – Ausstattung","Kind – Badzeug"];
+const PER_KID = ["Windeln","Fiebersenker","Zahnbürste","Zahnpasta"];   // Voreinstellung für „Kind – Badzeug“
 const isKidCat = c => (c==="Kind" || /^Kind – /.test(c)) && !KID_SHARED.includes(c);
+// Ein Eintrag „pro Kind“ steht in einer gemeinsamen Kategorie und wird bei mehreren Kindern je Kind angezeigt
+const isPerKid = i => !!i.perKid && !isKidCat(i.cat||"");
 const kidCat = (c, name) => c==="Kind" ? name : name + c.slice(4);          // „Kind – X“ → „Name – X“
 const ofKid = (c, name) => c===name || c.startsWith(name+" – ");
+const kidText = (t, name) => `${t} (${name})`;
+const kidSuffix = (t, name) => t.endsWith(` (${name})`);
+const baseText = (t, name) => t.slice(0, -(name.length+3));
 function parseKids(raw){
   raw = String(raw||"").trim();
   if(!raw || raw==="1") return [];
@@ -884,27 +1087,39 @@ function expandKids(items, kids, withDone){
   if(!kids.length) return items;
   const cats = []; items.forEach(i=>{ const c=i.cat||"Sonstiges"; if(!cats.includes(c)) cats.push(c); });
   const kidCats = cats.filter(isKidCat), out = []; let done = false;
+  const nu = (text, cat, perKid) => ({id:uid(), text, cat, ...(perKid?{perKid:true}:{}), ...(withDone?{done:false}:{})});
   cats.forEach(c=>{
-    if(!isKidCat(c)){ items.filter(i=>(i.cat||"Sonstiges")===c).forEach(i=>out.push(i)); return; }
+    if(!isKidCat(c)){
+      items.filter(i=>(i.cat||"Sonstiges")===c).forEach(i=>{
+        if(kids.length>1 && isPerKid(i)) kids.forEach(k=>out.push(nu(kidText(i.text,k), c, true)));
+        else out.push(i);
+      });
+      return;
+    }
     if(done) return; done = true;
     kids.forEach(k=>kidCats.forEach(kc=>items.filter(i=>(i.cat||"Sonstiges")===kc)
-      .forEach(i=>out.push({id:uid(), text:i.text, cat:kidCat(kc,k), ...(withDone?{done:false}:{})}))));
+      .forEach(i=>out.push(nu(i.text, kidCat(kc,k))))));
   });
   return out;
 }
-// Für Vorlagen zurück auf ein „Kind“: Kategorien des ersten Kindes umbenennen, die der weiteren weglassen
+// Für Vorlagen zurück auf ein „Kind“: Kategorien und „(Name)“-Einträge des ersten Kindes übernehmen, die der weiteren weglassen
 function collapseKids(items, kids){
   if(!kids || !kids.length) return items;
-  const first = kids[0];
-  return items.filter(i=>!kids.slice(1).some(k=>ofKid(i.cat||"",k)))
-    .map(i=>ofKid(i.cat||"",first) ? {...i, cat: i.cat===first ? "Kind" : "Kind"+i.cat.slice(first.length)} : i);
+  const first = kids[0], others = kids.slice(1);
+  return items
+    .filter(i=>!others.some(k=>ofKid(i.cat||"",k)) && !(i.perKid && others.some(k=>kidSuffix(i.text,k))))
+    .map(i=>{
+      if(ofKid(i.cat||"",first)) return {...i, cat: i.cat===first ? "Kind" : "Kind"+i.cat.slice(first.length)};
+      if(i.perKid && kidSuffix(i.text,first)) return {...i, text: baseText(i.text,first)};
+      return i;
+    });
 }
 function addKidDialog(ev){
-  const kids = ev.kids||[], hasKidCats = ev.items.some(i=>isKidCat(i.cat||""));
+  const kids = ev.kids||[], hasKidCats = ev.items.some(i=>isKidCat(i.cat||"") || i.perKid);
   if(!kids.length && !hasKidCats){ toast("Diese Liste hat keine Kind-Kategorien"); return; }
   const next = kids.length ? "Kind "+(kids.length+1) : "Kind 2";
   dialog(`<h2>Kind hinzufügen</h2>
-    <p class="hint" style="margin:0">Die Kind-Einträge werden für ein weiteres Kind angelegt. Die Ausstattung bleibt gemeinsam.</p>
+    <p class="hint" style="margin:0">Die Kind-Einträge werden für ein weiteres Kind angelegt. In gemeinsamen Kategorien kommen nur die Einträge „pro Kind“ dazu.</p>
     ${kids.length?"":`<label class="f" for="kOld">Bisheriges Kind heißt</label><input type="text" id="kOld" value="Kind 1">`}
     <label class="f" for="kNew">Neues Kind heißt</label><input type="text" id="kNew" value="${esc(next)}">
     <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Hinzufügen</button></div>`,
@@ -912,19 +1127,58 @@ function addKidDialog(ev){
     if(v!=="ok") return;
     const o = getObj("event")||ev, nm = $("#kNew").value.trim(); if(!nm) return;
     let list = o.kids||[];
+    if(list.includes(nm) || (!list.length && nm===($("#kOld")?.value.trim()||"Kind 1"))){ toast("Dieses Kind gibt es schon"); return; }
     if(!list.length){
       const old = ($("#kOld").value.trim()||"Kind 1");
-      o.items.forEach(i=>{ if(isKidCat(i.cat||"")) i.cat = kidCat(i.cat, old); });
+      o.items.forEach(i=>{ if(isKidCat(i.cat||"")) i.cat = kidCat(i.cat, old); else if(i.perKid && !list.length) i.text = kidText(i.text, old); });
       list = [old];
     }
-    if(list.includes(nm)){ toast("Dieses Kind gibt es schon"); return; }
     const src = list[0], copy = [];
     const cats = []; o.items.forEach(i=>{ if(ofKid(i.cat||"",src) && !cats.includes(i.cat)) cats.push(i.cat); });
     cats.forEach(c=>o.items.filter(i=>i.cat===c).forEach(i=>copy.push({id:uid(), text:i.text, cat: c===src ? nm : nm + c.slice(src.length), done:false})));
     const at = o.items.map(i=>list.some(k=>ofKid(i.cat||"",k))).lastIndexOf(true);
     o.items.splice(at+1, 0, ...copy);
-    o.kids = [...list, nm]; save(); render(); toast(`${copy.length} Einträge für ${nm} angelegt`);
+    // Einträge pro Kind in Badzeug/Ausstattung: hinter dem letzten Geschwister-Eintrag einfügen
+    let perKid = 0;
+    o.items.filter(i=>i.perKid && kidSuffix(i.text, src)).forEach(i=>{
+      const base = baseText(i.text, src);
+      const last = o.items.map(x=>x.cat===i.cat && list.some(k=>x.text===kidText(base,k))).lastIndexOf(true);
+      o.items.splice(last+1, 0, {id:uid(), text:kidText(base,nm), cat:i.cat, perKid:true, done:false}); perKid++;
+    });
+    o.kids = [...list, nm]; save(); render(); toast(`${copy.length+perKid} Einträge für ${nm} angelegt`);
   });
+}
+// Bestehende Packlisten: „<Kind> – Badzeug“ zu einem gemeinsamen „Kind – Badzeug“ zusammenführen
+function migrateKidBadzeug(){
+  if((db.evVersion||0) >= 1) return;
+  db.events.forEach(ev=>{
+    const kids = ev.kids||[]; if(!kids.length) return;
+    const cats = kids.map(k=>k+" – Badzeug");
+    const idx = ev.items.findIndex(i=>cats.includes(i.cat)); if(idx<0) return;
+    const merged = [], byText = new Map();
+    kids.forEach(k=>ev.items.filter(i=>i.cat===k+" – Badzeug").forEach(i=>{
+      if(kids.length>1 && PER_KID.some(x=>x.toLowerCase()===i.text.toLowerCase())) merged.push({...i, cat:"Kind – Badzeug", text:kidText(i.text,k), perKid:true});
+      else {
+        const key = i.text.toLowerCase(), ex = byText.get(key);
+        if(ex){ ex.done = ex.done && !!i.done; return; }          // gemeinsam: nur abgehakt, wenn bei allen abgehakt
+        const it = {...i, cat:"Kind – Badzeug", done:!!i.done}; byText.set(key, it); merged.push(it);
+      }
+    }));
+    // Pro-Kind-Einträge nach Grundbegriff gruppieren (Windeln (Kind 1), Windeln (Kind 2) …)
+    const order = []; merged.forEach(i=>{ const b = kids.reduce((t,k)=>kidSuffix(t,k)?baseText(t,k):t, i.text).toLowerCase(); if(!order.includes(b)) order.push(b); });
+    merged.sort((a,b)=>{ const ba = kids.reduce((t,k)=>kidSuffix(t,k)?baseText(t,k):t, a.text).toLowerCase(), bb = kids.reduce((t,k)=>kidSuffix(t,k)?baseText(t,k):t, b.text).toLowerCase(); return order.indexOf(ba)-order.indexOf(bb); });
+    const rest = ev.items.filter(i=>!cats.includes(i.cat));
+    const lastKid = rest.map(i=>kids.some(k=>ofKid(i.cat||"",k))).lastIndexOf(true);   // hinter die Kinder-Kategorien
+    rest.splice(lastKid+1, 0, ...merged);
+    ev.items = rest; ev.items.forEach((it,i)=>{ if(typeof it.o==="number") it.o = i+1; });
+  });
+  db.evVersion = 1;
+}
+// Version 2: Pro-Kind-Einträge in Packlisten und Vorlagen als Eigenschaft speichern
+function markPerKid(){
+  if((db.evVersion||0) >= 2) return;
+  db.events.forEach(ev=>{ const kids = ev.kids||[]; ev.items.forEach(i=>{ if(KID_SHARED.includes(i.cat||"") && kids.some(k=>kidSuffix(i.text,k))) i.perKid = true; }); });
+  db.evVersion = 2;
 }
 
 function newEventDialog(preTpl){
@@ -968,14 +1222,14 @@ function addTemplatesDialog(ev){
 }
 function saveAsTemplate(ev){
   ask("Als Vorlage speichern", ev.name, "Name der Vorlage", name=>{
-    db.templates.push({id:uid(), name, icon:ev.icon||"📦", items:collapseKids(ev.items, ev.kids).map(i=>({id:uid(),text:i.text,cat:i.cat}))});
+    db.templates.push({id:uid(), name, icon:ev.icon||"📦", items:collapseKids(ev.items, ev.kids).map(i=>({id:uid(),text:i.text,cat:i.cat,...(i.perKid?{perKid:true}:{})}))});
     save(); toast("Als Vorlage gespeichert");
   });
 }
 function updateSourceTemplate(ev){
   const t=db.templates.find(x=>x.name===ev.from); if(!t) return;
   confirmDlg(`Vorlage „${t.name}“ aktualisieren?`, "Die Einträge der Vorlage werden durch die Einträge dieser Liste ersetzt.", "Aktualisieren", ()=>{
-    t.items = collapseKids(ev.items, ev.kids).map(i=>({id:uid(),text:i.text,cat:i.cat})); save(); toast("Vorlage aktualisiert"); });
+    t.items = collapseKids(ev.items, ev.kids).map(i=>({id:uid(),text:i.text,cat:i.cat,...(i.perKid?{perKid:true}:{})})); save(); toast("Vorlage aktualisiert"); });
 }
 // Liest Listen wie „Badzeug“ + „- Zahnpasta“ oder „Kategorie: Eintrag“
 function parseItemsText(txt, cat){
@@ -1011,7 +1265,7 @@ function pasteItemsDialog(kind){
 function newTemplateDialog(){
   dialog(`<h2>Neue Vorlage</h2>
     <label class="f">Name</label><input type="text" id="tName" placeholder="z. B. Camping">
-    <label class="f">Symbol</label>${emojiPicker("📦")}
+    <label class="f">Symbol</label>${emojiPicker("")}
     <label class="f">Einträge (optional, einer pro Zeile – Überschriften mit „- Einträgen“ darunter werden Kategorien)</label>
     <textarea id="tItems" rows="7" placeholder="Kleidung&#10;- Regenjacke&#10;- Socken&#10;Zelt"></textarea>
     <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Anlegen</button></div>`,
@@ -1033,6 +1287,8 @@ function dialog(html, cb){
   };
   d.querySelectorAll("input[type=text]").forEach(i=>i.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); const ok=d.querySelector('[data-v="ok"]'); ok&&ok.click(); }}));
   d.showModal();
+  const on = d.querySelector(".emo-box button.on");          // gewähltes Symbol sichtbar machen
+  if(on){ const box = on.closest(".emo-box"); box.scrollTop = on.offsetTop - box.offsetTop - 40; }
 }
 
 function ask(title, value, placeholder, cb){
@@ -1109,7 +1365,7 @@ function norm(id, r){
   return id === "__p"
     ? {kind: r.kind === "template" ? "template" : "event", name: String(r.name || ""), icon: String(r.icon || ""), date: String(r.date || ""),
        ...(Array.isArray(r.kids) && r.kids.length ? {kids: r.kids.map(String).slice(0,9)} : {})}
-    : {text: String(r.text || ""), cat: String(r.cat || "Sonstiges"), done: !!r.done, o: +r.o || 0};
+    : {text: String(r.text || ""), cat: String(r.cat || "Sonstiges"), done: !!r.done, o: +r.o || 0, ...(r.perKid ? {perKid: true} : {})};
 }
 const sig = (id, r) => JSON.stringify(norm(id, r));
 function records(o){
@@ -1123,7 +1379,7 @@ function fromRecords(o, recs){
   const isEv = kindOf(o) === "event", p = recs.__p;
   if (p){ if (p.name) o.name = p.name; if (p.icon) o.icon = p.icon; if (isEv){ o.date = p.date || ""; if (p.kids) o.kids = p.kids; else delete o.kids; } }
   o.items = Object.entries(recs).filter(([id])=>id !== "__p").sort((a, b)=>a[1].o - b[1].o)
-    .map(([id, r])=>({id, text: r.text, cat: r.cat, o: r.o, ...(isEv ? {done: !!r.done} : {})}));
+    .map(([id, r])=>({id, text: r.text, cat: r.cat, o: r.o, ...(r.perKid ? {perKid: true} : {}), ...(isEv ? {done: !!r.done} : {})}));
 }
 
 /* Verschlüsselung (AES-GCM, Schlüssel nur im Einladungslink) */
