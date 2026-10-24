@@ -271,7 +271,7 @@ const EMOJIS = EMOJI_GROUPS.flatMap(g=>g[1]);
 
 /* ---------- Daten ---------- */
 const KEY = "packliste.v1";
-const APP_VERSION = "24.10.2026 c";
+const APP_VERSION = "24.10.2026 f";
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const mk = (cat, list) => list.map(t => ({id:uid(), text:t, cat}));
 const mkPer = (cat, list, per) => list.map(t => ({id:uid(), text:t, cat, ...(per.includes(t)?{perKid:true}:{})}));
@@ -289,6 +289,8 @@ const seasonKid = (list, clothesCat) => [
 ];
 
 const VATER = ["Kleidung","Schuhe","Jacke","Haarzeug","Zahnbürste"];
+// Ultimative Liste Vater (Stand 24.10.2026, aus der App exportiert)
+const VATER_LIST = [["Kleidung Vater", "Schuhe"], ["Kleidung Vater", "Jacke"], ["Kleidung Vater", "Boxershorts"], ["Kleidung Vater", "Socken"], ["Kleidung Vater", "Tshirts"], ["Kleidung Vater", "Hemden"], ["Kleidung Vater", "Pullover"], ["Kleidung Vater", "Hosen"], ["Badzeug", "Haarzeug"], ["Badzeug", "Zahnbürste"], ["Badzeug", "Rasierer"], ["Badzeug", "Shampoo"], ["Badzeug", "Handtuch"], ["Vater packt ein", "Modellflugzeug"], ["Vater packt ein", "Ladekabel"], ["Vater packt ein", "Kamera"], ["Vater packt ein", "Kopfhörer"], ["Vater packt ein", "Portemonnaie"], ["Vater packt ein", "Schlüssel"], ["Vater packt ein", "Wasserflasche"], ["Vater packt ein", "Taschentücher"], ["Vater packt ein", "Feuerzeug"], ["Technik", "Laptop"], ["Technik", "Maus"], ["Technik", "Power Bank"]];
 const THERME = ["Handtücher","Bademantel","Saunalaken","2x Shampoo","Badeanzug","Badehose","Schwimmbrille","Kopfhörer","Buch","Äpfel","Anderes Essen","Wasserflasche","Badelatschen","Kuschelsocken","Frische Unterwäsche"];
 const MUTTER_SOMMER = ["Sonnenshirt","Sonnenhut","Birkenstock","Bikini"];
 const MUTTER_WINTER = ["Handschuhe","Mütze","Winterjacke","Schal","Skihose","Dicke Socken","Winterschuhe","Thermounterwäsche"];
@@ -334,7 +336,7 @@ function familyTemplates(){
     ...mk("Kind – Badzeug",["Zinksalbe","Windeln","Feuchttücher","Vitamin D","Fiebersenker","Nasensauger","Zahnbürste","Zahnpasta","Schnuller","Wickelunterlagen","Sonnencreme"]),
     ...(kleinkind?mk("Kind – Küchenzeug",["Lätzchen","Löffel","Milch","Haferflocken","Bananen","Anderes Essen","Wasserflasche"]):[]),
     ...mk("Kind – Ausstattung",["Kinderwagen","Regenschutz Kinderwagen","Babyschalenadapter","Trage","Kumja","Babyfon","Spielzeug","Leuchtkugel","Stillkissen",...(kleinkind?[]:["Nestchen"]),"Kopfkissen","Sonnensegel","Insektennetz"]),
-    ...mk("Für uns",["Wasserflasche","Kopfhörer","Portmonnaie","Ladekabel","Buch","Pille","Kleidung","Kopfschmerztabletten"])
+    ...mk("Für uns",["Wasserflasche","Kopfhörer","Portemonnaie","Ladekabel","Buch","Pille","Kleidung","Kopfschmerztabletten"])
   ];
   const markBad = items => items.map(i => i.cat==="Kind – Badzeug" && PER_KID.includes(i.text) ? {...i, perKid:true} : i);
   return familyTemplatesRaw(markBad, reisen).map(kidOrder);
@@ -350,17 +352,17 @@ function familyTemplatesRaw(markBad, reisen){
       ...mk("Für uns",["Wasserflasche","Snacks","Kopfschmerztabletten","Taschentücher"])
     ]},
     {id:uid(), name:"Im Sommer einpacken", icon:"☀️", items:[
-      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Mücken Blitzdings","Wasserflasche","Sonnencreme","Schwimmsachen","Kopfhörer","Sonnenbrille"]),
+      ...mk("Für uns",["Schlüssel","Portemonnaie","Handy","Ladekabel","Mücken Blitzdings","Wasserflasche","Sonnencreme","Schwimmsachen","Kopfhörer","Sonnenbrille"]),
       ...seasonKid(["Wasserflasche","Sonnenhut","Snacks","Sonnencreme","Sonnenshirt","Schwimmwindeln","Handtuch"], "Kind – Kleidung Sommer"),
       ...mk("Kind – Ausstattung",["Sonnensegel","Sandspielzeug"])
     ]},
     {id:uid(), name:"Im Herbst einpacken", icon:"🍂", items:[
-      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Wasserflasche","Regenjacke","Regenschirm","Taschentücher","Kopfhörer"]),
+      ...mk("Für uns",["Schlüssel","Portemonnaie","Handy","Ladekabel","Wasserflasche","Regenjacke","Regenschirm","Taschentücher","Kopfhörer"]),
       ...seasonKid(["Wasserflasche","Mütze","Matschhose","Gummistiefel","Regenjacke","Snacks"], "Kind – Kleidung allgemein"),
       ...mk("Kind – Ausstattung",["Regenschutz Kinderwagen","Sandspielzeug"])
     ]},
     {id:uid(), name:"Im Winter einpacken", icon:"❄️", items:[
-      ...mk("Für uns",["Schlüssel","Portmonnaie","Handy","Ladekabel","Wasserflasche","Mütze","Schal","Handschuhe","Kopfhörer","Taschentücher"]),
+      ...mk("Für uns",["Schlüssel","Portemonnaie","Handy","Ladekabel","Wasserflasche","Mütze","Schal","Handschuhe","Kopfhörer","Taschentücher"]),
       ...seasonKid(["Wasserflasche","Schneeanzug","Wintermütze","Handschuhe","Winterschuhe","Snacks"], "Kind – Kleidung Winter"),
       ...mk("Kind – Ausstattung",["Regenschutz Kinderwagen","Fußsack / Decke"])
     ]},
@@ -370,7 +372,7 @@ function familyTemplatesRaw(markBad, reisen){
     {id:uid(), name:"Ultimative Liste Kleidung allgemein", icon:"👕", items:mk("Kleidung allgemein",["Kleider","Rock","Unterwäsche","Socken","BH","Reisehandtuch","Wäschenetz","Jeans","Jogginghose","Tshirts","Pullover","Schlafsachen","Strumpfhosen"])},
     {id:uid(), name:"Ultimative Liste Kleidung Sommer", icon:"👗", items:mk("Kleidung Sommer",MUTTER_SOMMER)},
     {id:uid(), name:"Ultimative Liste Kleidung Winter", icon:"🧣", items:mk("Kleidung Winter",MUTTER_WINTER)},
-    {id:uid(), name:"Ultimative Liste Vater", icon:"👨", items:mk("Vater",VATER)},
+    {id:uid(), name:"Ultimative Liste Vater", icon:"👨", items:VATER_LIST.map(([cat,text])=>({id:uid(), text, cat}))},
     {id:uid(), name:"Ultimative Kinderliste", icon:"🧸", items:markBad([
       ...mk("Kind – Kleidung Sommer",["Sonnenhut","Sonnenshirt","Sonnenbrille","Badesachen"]),
       ...mk("Kind – Kleidung Winter",["Wintermütze","Schneeanzug","Handschuhe","Winterschuhe","Schal / Loop"]),
@@ -388,7 +390,7 @@ function familyTemplatesRaw(markBad, reisen){
     ]},
     {id:uid(), name:"Therme", icon:"♨️", items:mk("Therme",THERME)},
     {id:uid(), name:"Ultimative Liste Sonstiges", icon:"🎒", items:[
-      ...mk("Für uns",["Bauchtasche","Adapter","Kindl","Buch","Ladekabel","Stifte","Wasserflasche","Spiele (Cabo, Doppelkopf...)","3x Reisepass","Portmonnaie","Bargeld","Kreditkarten","Kamera","Sonnenbrillending Vater","Kopfhörer","Snacks","Krankenversicherungskarte"])
+      ...mk("Für uns",["Bauchtasche","Adapter","Kindl","Buch","Ladekabel","Stifte","Wasserflasche","Spiele (Cabo, Doppelkopf...)","3x Reisepass","Portemonnaie","Bargeld","Kreditkarten","Kamera","Sonnenbrillending Vater","Kopfhörer","Snacks","Krankenversicherungskarte"])
     ]}
   ];
 }
@@ -757,9 +759,36 @@ function upgradeV25(){
     kk.items.splice(at, 0, {id:uid(), text:"Schlafanzug", cat:"Kind – Kleidung allgemein"});
   }
 }
+// Version 26: neue Ultimative Liste Vater – nur wenn noch die alte Standardliste drin ist
+function upgradeV26(){
+  const t = db.templates.find(x=>x.name==="Ultimative Liste Vater" && !x.share); if(!t) return;
+  const isOld = t.items.length===VATER.length && t.items.every(i=>i.cat==="Vater" && VATER.includes(i.text));
+  if(isOld) t.items = VATER_LIST.map(([cat,text])=>({id:uid(), text, cat}));
+}
+// Version 27: Vater-Liste aufgeräumt (Shampoo → Badzeug, Tshirts, gemeinsame Sachen unter „Für uns“), Portemonnaie einheitlich
+function upgradeV27(){
+  db.templates.forEach(t=>{ if(t.share) return; t.items.forEach(i=>{ if(i.text==="Portmonnaie") i.text = "Portemonnaie"; }); dedupe(t); });
+  const t = db.templates.find(x=>x.name==="Ultimative Liste Vater" && !x.share); if(!t) return;
+  t.items.forEach(i=>{
+    if(i.text==="Shampoo" && i.cat==="Kleidung") i.cat = "Badzeug";
+    if(i.text==="TShirt") i.text = "Tshirts";
+    if(i.cat==="Sonstiges") i.cat = "Für uns";
+    if(["Ladekabel","Kamera","Kopfhörer"].includes(i.text) && i.cat==="Technik") i.cat = "Für uns";
+  });
+  dedupe(t);
+}
+// Version 28: Vater-Liste – eigene Kategorienamen, Reihenfolge, Ergänzungen
+function upgradeV28(){
+  const t = db.templates.find(x=>x.name==="Ultimative Liste Vater" && !x.share); if(!t) return;
+  t.items.forEach(i=>{ if(i.cat==="Kleidung") i.cat = "Kleidung Vater"; if(i.cat==="Für uns") i.cat = "Vater packt ein"; });
+  mergeItems(t.items, ["Wasserflasche","Taschentücher","Feuerzeug"].map(text=>({text, cat:"Vater packt ein"})), false);
+  const order = ["Schuhe","Jacke","Boxershorts","Socken","Tshirts","Hemden","Pullover","Hosen"];
+  sortWithin(t, "Kleidung Vater", x=>{ const r = order.indexOf(x); return r<0 ? order.length : r; });
+  sortCats(t, ["Kleidung Vater","Badzeug","Vater packt ein","Technik"]);
+}
 function upgradeTemplates(){
   const v = db.tplVersion||1;
-  if(v >= 25) return;
+  if(v >= 28) return;
   if(v < 2){
     db.templates = db.templates.filter(t => t.share || OLD_EXAMPLES[t.name] !== t.items.map(i=>i.text).join("|"));
     const have = new Set(db.templates.map(t=>t.name));
@@ -767,7 +796,7 @@ function upgradeTemplates(){
     db.events.concat(db.templates).forEach(o=>o.items.forEach(i=>{ i.cat=renamePeople(i.cat||"Sonstiges"); i.text=renamePeople(i.text); }));
     db.templates = db.templates.filter(t => t.share || !["Besuch bei den Großeltern","Urlaub Winter"].includes(t.name));
     db.templates.forEach(t=>{ if(!t.group && GROUP_OF[t.name]) t.group = GROUP_OF[t.name]; });
-    db.tplVersion = 25; return;
+    db.tplVersion = 28; return;
   }
   if(v < 3){
     // Version 3: Namen → Mutter / Vater / Kind, neue Herbst- und Winter-Vorlage
@@ -798,8 +827,11 @@ function upgradeTemplates(){
   if(v < 22) upgradeV22();
   if(v < 23) upgradeV23();
   if(v < 24) upgradeV24();
-  upgradeV25();
-  db.tplVersion = 25;
+  if(v < 25) upgradeV25();
+  if(v < 26) upgradeV26();
+  if(v < 27) upgradeV27();
+  upgradeV28();
+  db.tplVersion = 28;
 }
 function defaultData(){
   return {
@@ -807,7 +839,7 @@ function defaultData(){
       ...familyTemplates().map(t=>GROUP_OF[t.name] ? {...t, group:GROUP_OF[t.name]} : t)
     ],
     events:[],
-    tplVersion:25
+    tplVersion:28
   };
 }
 let db;
