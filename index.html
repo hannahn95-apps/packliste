@@ -104,6 +104,17 @@ nav button.active{color:var(--accent);font-weight:600}
 .catlist{display:flex;flex-wrap:wrap;gap:6px}
 .catbtn{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 12px;cursor:pointer;font-size:.9rem}
 .catbtn:active{background:var(--accent-soft)}
+.target-chip{position:absolute;left:12px;right:12px;bottom:100%;margin-bottom:6px;background:var(--accent);color:#fff;border-radius:12px;padding:6px 6px 6px 12px;font-size:.85rem;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.target-chip button{margin-left:auto;background:rgba(255,255,255,.2)!important;width:28px!important;height:28px;border-radius:50%!important;display:grid;place-items:center;padding:0;font-size:1rem!important}
+.target-chip svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round}
+.addbar{position:fixed}
+body.has-chip main{padding-bottom:calc(160px + env(safe-area-inset-bottom))}
+body.has-chip .toast{bottom:calc(190px + env(safe-area-inset-bottom))}
+.item.emptycat{color:var(--muted);font-size:.9rem;font-style:italic;cursor:pointer}
+.newcat{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:6px 0 10px;padding:12px;border:1.5px dashed var(--line);border-radius:var(--radius);background:none;color:var(--muted);cursor:pointer;font-size:.9rem}
+.newcat svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.more-cats{margin-top:12px}
+.more-cats summary{cursor:pointer;color:var(--muted);font-size:.85rem;margin-bottom:6px}
 #newCat.flash{animation:flash .6s}
 @keyframes flash{0%{background:var(--accent-soft);border-color:var(--accent)}100%{}}
 .item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line);min-height:52px}
@@ -209,6 +220,7 @@ mark{background:transparent;color:var(--accent);font-weight:700}
 .scanbox{position:relative;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:1;max-width:100%}
 .scanbox video{width:100%;height:100%;object-fit:cover;display:block}
 .scanframe{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.85);border-radius:16px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+select.catsel{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;color:var(--text)}
 #txOut{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;resize:vertical}
 .memb{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line)}
 .memb b{flex:1;font-weight:600}
@@ -271,7 +283,7 @@ const EMOJIS = EMOJI_GROUPS.flatMap(g=>g[1]);
 
 /* ---------- Daten ---------- */
 const KEY = "packliste.v1";
-const APP_VERSION = "24.10.2026 f";
+const APP_VERSION = "24.10.2026 h";
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const mk = (cat, list) => list.map(t => ({id:uid(), text:t, cat}));
 const mkPer = (cat, list, per) => list.map(t => ({id:uid(), text:t, cat, ...(per.includes(t)?{perKid:true}:{})}));
@@ -875,6 +887,8 @@ function relDays(d){
 }
 let toastT;
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2200); }
+// Kategorien einer Liste: mit Einträgen + selbst angelegte, noch leere
+function listCats(o){ const c = cats(o.items); (o.emptyCats||[]).forEach(e=>{ if(!c.includes(e)) c.push(e); }); return c; }
 function cats(items){ const s=[]; items.forEach(i=>{ const c=i.cat||"Sonstiges"; if(!s.includes(c)) s.push(c); }); return s; }
 // Kategorien, die in Vorlagen vorkommen (ohne alte Standardkategorien und ohne Kind-Namen aus Packlisten)
 function allCats(){
@@ -887,18 +901,26 @@ function allCats(){
 function catOptions(o, kind){
   const kids = kind==="event" ? (o.kids||[]) : [];
   const generic = c => { if(!kids.length) return null; const k = kids.find(k=>ofKid(c,k)); return k ? (c===k ? "Kind" : "Kind"+c.slice(k.length)) : null; };
-  const own = cats(o.items);
+  const own = kidLast(listCats(o), kids);
   const forAll = kids.length ? [...new Set(own.map(generic).filter(Boolean))] : [];
   const used = new Set([...own, ...forAll]);
-  const others = allCats().filter(c=>!used.has(c) && !(kids.length && kids.some(k=>ofKid(c,k))));
+  const others = kidLast(allCats().filter(c=>!used.has(c) && !(kids.length && kids.some(k=>ofKid(c,k)))), kids);
   return {own, forAll, others, kids};
+}
+// Alle Kind-Kategorien zusammen ans Ende: erst „Kind …“, dann je Kind seine Kategorien
+const isKidRelated = (c, kids) => c==="Kind" || c.startsWith("Kind – ") || (kids||[]).some(k=>ofKid(c,k));
+function kidLast(list, kids){
+  const plain = list.filter(c=>!isKidRelated(c, kids));
+  const generic = list.filter(c=>c==="Kind" || c.startsWith("Kind – ")).sort((a,b)=>a.localeCompare(b,"de"));
+  const per = (kids||[]).flatMap(k=>list.filter(c=>ofKid(c,k)));
+  return [...plain, ...generic, ...per];
 }
 const catLabel = (c, kids) => kids.length && isKidCat(c) ? `${c} (${kids.length>1?"alle Kinder":kids[0]})` : c;
 
 /* ---------- Navigation ---------- */
 let view = {name:"events"};
 let editing = false;
-function go(v){ view = v; editing = false; selected.clear(); catManual = false; lastCat = ""; render(); window.scrollTo(0,0);
+function go(v){ view = v; editing = false; selected.clear(); catManual = false; lastCat = ""; document.body.classList.remove("has-chip"); render(); window.scrollTo(0,0);
   if(v.name==="event"||v.name==="template") history.pushState({d:1},""); }
 window.addEventListener("popstate", ()=>{ if(view.name==="event") go({name:"events"}); else if(view.name==="template") go({name:"templates"}); });
 function back(){ if(history.state && history.state.d) history.back(); else go({name: view.name==="event"?"events":"templates"}); }
@@ -1127,11 +1149,18 @@ function renderList(hdr,main,bottom,kind){
       <div class="toggle"><span class="chip on" onclick="newEventDialog('${o.id}')">＋ Ereignis aus dieser Vorlage</span></div>`;
   }
   if(editing) html += `<p class="hint">Bearbeitungsmodus: Kreis antippen zum Markieren (mehrere möglich) und dann gesammelt verschieben. Am Griff ${I.grip.replace("<svg",'<svg class="ico"')} ziehen zum Umsortieren, Pfeile an der Kategorie ändern ihre Reihenfolge. Eintrag antippen zum Ändern.</p>`;
-  const list = cats(o.items);
+  if(o.emptyCats){ const used = cats(o.items); o.emptyCats = o.emptyCats.filter(c=>!used.includes(c)); if(!o.emptyCats.length) delete o.emptyCats; }
+  const list = listCats(o), filled = cats(o.items);
   curCats = list;
   let shown = 0;
   list.forEach((c,ci)=>{
     let items = o.items.filter(i=>(i.cat||"Sonstiges")===c);
+    if(!filled.includes(c)){                      // selbst angelegte, noch leere Kategorie
+      html += `<div class="group ${editing?"editing":""} ${catManual && c===lastCat?"target":""}" data-cat="${esc(c)}">
+        <h3 ${editing?'class="ed"':`onclick="pickCat(${ci})"`}><span class="cname">${esc(c)}</span><span class="cnt">0</span>${editing?`<button type="button" class="iconbtn mv" onclick="delEmptyCat(${ci})" aria-label="Leere Kategorie löschen">${I.trash}</button>`:`<span class="hadd">${I.plus}</span>`}</h3>
+        <div class="item emptycat" onclick="pickCat(${ci})">Noch leer – antippen und Einträge hinzufügen</div></div>`;
+      return;
+    }
     const total = items.length, doneN = items.filter(i=>i.done).length;
     if(isEv && db.settings.hideDone && !editing) items = items.filter(i=>!i.done);
     if(!items.length) return;
@@ -1141,7 +1170,7 @@ function renderList(hdr,main,bottom,kind){
     const head = editing
       ? `<h3 class="ed"><span class="cname">${esc(c)}</span>${count}
           <button type="button" class="iconbtn mv" onclick="moveCat(${ci},-1)" ${ci===0?"disabled":""} aria-label="Kategorie nach oben">${I.up}</button>
-          <button type="button" class="iconbtn mv" onclick="moveCat(${ci},1)" ${ci===list.length-1?"disabled":""} aria-label="Kategorie nach unten">${I.chev}</button>
+          <button type="button" class="iconbtn mv" onclick="moveCat(${ci},1)" ${ci>=filled.length-1?"disabled":""} aria-label="Kategorie nach unten">${I.chev}</button>
           <button type="button" class="iconbtn mv" onclick="selectCat(${ci})" aria-label="Alle in dieser Kategorie auswählen">${I.selall}</button></h3>`
       : `<h3 onclick="pickCat(${ci})" title="Einträge in dieser Kategorie hinzufügen"><span class="cname">${esc(c)}</span>${count}<span class="hadd">${I.plus}</span></h3>`;
     html += `<div class="group ${editing?"editing":""} ${!editing && catManual && c===lastCat?"target":""}" data-cat="${esc(c)}">${head}` +
@@ -1152,8 +1181,9 @@ function renderList(hdr,main,bottom,kind){
         <button class="iconbtn del" onclick="delItem('${kind}','${i.id}')" aria-label="Löschen">${I.trash}</button>
       </div>`).join("") + `</div>`;
   });
-  if(!o.items.length) html += `<div class="empty"><div class="big">📝</div>Die Liste ist leer.<br>Füge unten Einträge hinzu.</div>`;
-  else if(!shown) html += `<div class="empty"><div class="big">🎉</div>Alles gepackt!</div>`;
+  if(!o.items.length && !list.length) html += `<div class="empty"><div class="big">📝</div>Die Liste ist leer.<br>Füge unten Einträge hinzu.</div>`;
+  else if(o.items.length && !shown) html += `<div class="empty"><div class="big">🎉</div>Alles gepackt!</div>`;
+  html += `<button type="button" class="newcat" onclick="newCatDialog('${kind}')">${I.plus} Neue Kategorie</button>`;
   main.innerHTML = html;
   if(editing && selected.size){                 // Mehrfachauswahl: Aktionsleiste statt Eingabezeile
     bottom.innerHTML = `<div class="addbar selbar"><span class="selcount">${selected.size} ausgewählt</span>
@@ -1162,16 +1192,11 @@ function renderList(hdr,main,bottom,kind){
       <button type="button" class="iconbtn" onclick="clearSel()" aria-label="Auswahl aufheben">${I.x}</button></div>`;
     return;
   }
-  const co = catOptions(o, kind);
-  if(!lastCat || (![...co.own,...co.forAll,...co.others].includes(lastCat))) lastCat = co.forAll[0] || co.own[0] || "Sonstiges";
-  const opt = c => `<option value="${esc(c)}" ${c===lastCat?"selected":""}>${esc(catLabel(c, co.kids))}</option>`;
-  const opts = (co.forAll.length ? `<optgroup label="Für ${co.kids.length>1?"alle Kinder":esc(co.kids[0])}">${co.forAll.map(opt).join("")}</optgroup>` : "")
-    + `<optgroup label="In dieser Liste">${co.own.filter(c=>!(co.kids.length===1 && ofKid(c,co.kids[0]))).map(opt).join("")}</optgroup>`
-    + (co.others.length ? `<optgroup label="Weitere Kategorien">${co.others.map(opt).join("")}</optgroup>` : "")
-    + `<option value="__new">+ Neue Kategorie…</option>`;
+  const kidsNow = isEv ? (o.kids||[]) : [];
+  document.body.classList.toggle("has-chip", !!(catManual && lastCat));
   bottom.innerHTML = `<form class="addbar" onsubmit="addItem(event,'${kind}')">
-    <input id="newItem" placeholder="${catManual ? `Neu in „${esc(catLabel(lastCat, co.kids))}“…` : "Neuer Eintrag…"}" autocomplete="off" enterkeyhint="done" oninput="guessSoon('${kind}')">
-    <select id="newCat" onchange="catChange(this)">${opts}</select>
+    ${catManual && lastCat ? `<div class="target-chip">Neue Einträge in „${esc(catLabel(lastCat, kidsNow))}“ <button type="button" onclick="clearTarget()" aria-label="Ziel-Kategorie aufheben">${I.x}</button></div>` : ""}
+    <input id="newItem" placeholder="${catManual && lastCat ? "Eintrag hinzufügen…" : "Neuer Eintrag…"}" autocomplete="off" enterkeyhint="done">
     <button type="submit" aria-label="Hinzufügen">＋</button></form>`;
 }
 
@@ -1273,9 +1298,65 @@ function pickCat(ci){
   const c = curCats[ci]; if(!c) return;
   const o = getObj(view.name), kids = view.name==="event" ? (o?.kids||[]) : [];
   const k = kids.length===1 ? kids.find(k=>ofKid(c,k)) : null;   // bei einem Kind über die allgemeine Kategorie, sonst genau dieses Kind
-  lastCat = k ? (c===k ? "Kind" : "Kind"+c.slice(k.length)) : c;
-  catManual = true; render();
+  const target = k ? (c===k ? "Kind" : "Kind"+c.slice(k.length)) : c;
+  if(catManual && lastCat===target){ clearTarget(); return; }   // nochmal antippen = aufheben
+  lastCat = target; catManual = true; render();
   const ni = $("#newItem"); if(ni){ ni.focus(); }
+}
+function clearTarget(){ catManual = false; lastCat = ""; render(); $("#newItem")?.focus(); }
+// Neue (zunächst leere) Kategorie anlegen
+function newCatDialog(kind){
+  ask("Neue Kategorie", "", "z. B. Strand", n=>{
+    const o = getObj(kind); if(!o) return;
+    if(!listCats(o).includes(n)) (o.emptyCats ||= []).push(n);
+    lastCat = n; catManual = true; save(); render();
+    $("#newItem")?.focus(); toast(`Kategorie „${n}“ angelegt – jetzt Einträge hinzufügen`);
+  });
+}
+function delEmptyCat(ci){
+  const o = getObj(view.name), c = curCats[ci]; if(!o || !o.emptyCats) return;
+  o.emptyCats = o.emptyCats.filter(x=>x!==c); if(!o.emptyCats.length) delete o.emptyCats;
+  if(lastCat===c){ lastCat=""; catManual=false; }
+  save(); render();
+}
+// Einträge in eine Kategorie verschieben (bei Kind-Kategorien in Packlisten: je Kind)
+function moveItems(kind, ids, target){
+  const o = getObj(kind); if(!o) return 0;
+  const kids = kind==="event" ? (o.kids||[]) : [];
+  const moving = o.items.filter(i=>ids.includes(i.id)); if(!moving.length) return 0;
+  o.items = o.items.filter(i=>!ids.includes(i.id));
+  let placed = [];
+  moving.forEach(i=>{
+    if(kids.length && isKidCat(target)) kids.forEach((k,n)=>placed.push({...i, id: n===0 ? i.id : uid(), cat:kidCat(target,k), ...(n>0 && kind==="event" ? {done:false} : {})}));
+    else placed.push({...i, cat:target});
+  });
+  placed.forEach(it=>{
+    let last = o.items.map(x=>x.cat).lastIndexOf(it.cat);
+    if(last<0 && isKidRelated(it.cat, kids)) last = o.items.map(x=>isKidRelated(x.cat||"", kids)).lastIndexOf(true);
+    o.items.splice(last>=0 ? last+1 : o.items.length, 0, it);
+  });
+  dedupe(o);                                          // z. B. „Gummistiefel“ beider Kinder → nur einmal je Ziel
+  o.items.forEach((it,i)=>{ it.o = i+1; });
+  save(); return placed.length;
+}
+function catPickDialog(kind, ids, title){
+  const o = getObj(kind); if(!o || !ids.length) return;
+  const co = catOptions(o, kind);
+  const btn = c => `<button type="button" class="catbtn" data-v="c:${esc(c)}">${esc(catLabel(c, co.kids))}</button>`;
+  dialog(`<h2>${esc(title)}</h2>
+    <label class="f">In dieser Liste</label><div class="catlist">${co.own.map(btn).join("")}</div>
+    ${co.others.length?`<details class="more-cats"><summary>Weitere Kategorien</summary><div class="catlist">${co.others.map(btn).join("")}</div></details>`:""}
+    <label class="f" for="mvNew">Oder neue Kategorie</label>
+    <div class="btnrow"><input type="text" id="mvNew" placeholder="Name der Kategorie" style="flex:3"><button type="button" class="btn primary" data-v="new" style="flex:1">OK</button></div>
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button></div>`,
+  v=>{
+    let target = null;
+    if(v && v.startsWith("c:")) target = v.slice(2);
+    if(v==="new") target = ($("#mvNew").value||"").trim();
+    if(!target) return;
+    const n = moveItems(kind, ids, target);
+    selected.clear(); render(); if(n) toast(`Nach „${target}“ verschoben`);
+  });
 }
 // Kategorie zum eingegebenen Text erraten: erst in dieser Liste, dann in allen Vorlagen
 const stem = t => fold(t).replace(/\s*\([^)]*\)\s*$/,"").replace(/(en|n|e|s)$/,"");
@@ -1309,22 +1390,28 @@ function addItem(ev,kind){
   const inp=$("#newItem"), text=inp.value.trim(); if(!text) return;
   inp.value="";
   const o=getObj(kind), isEv = kind==="event", kids = isEv ? (o.kids||[]) : [];
-  const chosen = $("#newCat").value==="__new" ? (lastCat||"Sonstiges") : $("#newCat").value;
+  const added = [], cats_ = new Set();
+  let guessed = true;
   text.split(/\s*[;\n]\s*/).filter(Boolean).forEach(t=>{
-    let cat = chosen, perKid = false;
-    if(!catManual){ const g = guessCat(t, o, kind); if(g){ cat = g.cat; perKid = g.perKid; } }
+    let cat = catManual && lastCat ? lastCat : "Sonstiges", perKid = false;
+    if(!(catManual && lastCat)){ const g = guessCat(t, o, kind); if(g){ cat = g.cat; perKid = g.perKid; } else guessed = false; }
     let news;
     if(isEv && kids.length && isKidCat(cat)) news = kids.map(k=>({text:t, cat:kidCat(cat,k)}));                       // pro Kind-Kategorie
     else if(isEv && kids.length>1 && perKid) news = kids.map(k=>({text:kidText(t,k), cat, perKid:true}));          // pro Kind-Eintrag
     else news = [{text:t, cat, ...(perKid?{perKid:true}:{})}];
     news.forEach(n=>{
       const it = {id:uid(), ...n, ...(isEv?{done:false}:{})};
-      const last = o.items.map(i=>i.cat).lastIndexOf(it.cat);
+      let last = o.items.map(i=>i.cat).lastIndexOf(it.cat);
+      if(last<0 && isKidRelated(it.cat, kids)) last = o.items.map(i=>isKidRelated(i.cat||"", kids)).lastIndexOf(true);
       if(last>=0) o.items.splice(last+1, 0, it); else o.items.push(it);
+      added.push(it.id); cats_.add(isEv && kids.length && isKidCat(cat) ? cat : it.cat);
     });
-    lastCat = chosen;
   });
   save(); render(); const ni=$("#newItem"); ni.focus();
+  if(catManual && lastCat) return;                                   // feste Ziel-Kategorie: kein Vorschlag nötig
+  const where = [...cats_].map(c=>catLabel(c, kids)).join(", ");
+  undo(guessed ? `In „${where}“ einsortiert` : `Keine passende Kategorie – unter „${where}“`,
+       ()=>catPickDialog(kind, added, added.length===1 ? "Kategorie wählen" : `${added.length} Einträge einsortieren`), "Ändern");
 }
 /* Mehrfachauswahl im Bearbeitungsmodus */
 function toggleSel(id){ if(selected.has(id)) selected.delete(id); else selected.add(id); render(); }
@@ -1336,6 +1423,7 @@ function selectCat(ci){
   ids.forEach(id=> all ? selected.delete(id) : selected.add(id)); render();
 }
 function moveSelDialog(kind){
+  if(selected.size){ catPickDialog(kind, [...selected], `${selected.size} ${selected.size===1?"Eintrag":"Einträge"} verschieben nach`); return; }
   const o = getObj(kind); if(!o || !selected.size) return;
   const co = catOptions(o, kind), own = co.own;
   const btn = c => `<button type="button" class="catbtn" data-v="c:${esc(c)}">${esc(c)}</button>`;
@@ -1368,7 +1456,7 @@ function delSel(kind){
 /* Reihenfolge der Kategorien */
 function moveCat(ci, dir){
   const o = getObj(view.name); if(!o) return;
-  const order = cats(o.items), j = ci+dir; if(j<0 || j>=order.length) return;
+  const order = cats(o.items), j = ci+dir; if(ci>=order.length || j<0 || j>=order.length) return;
   [order[ci], order[j]] = [order[j], order[ci]];
   o.items = order.flatMap(c=>o.items.filter(i=>(i.cat||"Sonstiges")===c));
   o.items.forEach((it,i)=>{ it.o = i+1; });
@@ -1388,10 +1476,21 @@ function resetDone(){
 function delItem(kind,id){ const o=getObj(kind); const idx=o.items.findIndex(x=>x.id===id); const [rm]=o.items.splice(idx,1); save(); render();
   undo(`„${rm.text}“ gelöscht`, ()=>{ o.items.splice(idx,0,rm); save(); render(); }); }
 let undoFn=null;
-function undo(msg,fn){ undoFn=fn; const t=$("#toast"); t.innerHTML=esc(msg)+` · <u style="pointer-events:auto;cursor:pointer" onclick="doUndo()">Rückgängig</u>`;
-  t.style.pointerEvents="auto"; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>{t.classList.remove("show");t.style.pointerEvents="none";undoFn=null;},4000); }
+function undo(msg,fn,label){ undoFn=fn; const t=$("#toast"); t.innerHTML=esc(msg)+` · <u style="pointer-events:auto;cursor:pointer" onclick="doUndo()">${esc(label||"Rückgängig")}</u>`;
+  t.style.pointerEvents="auto"; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>{t.classList.remove("show");t.style.pointerEvents="none";undoFn=null;}, label ? 5000 : 4000); }
 function doUndo(){ if(undoFn){undoFn(); undoFn=null;} $("#toast").classList.remove("show"); }
 
+// Auswahlliste für die Kategorie eines einzelnen Eintrags (immer mit dem aktuellen Stand der Liste)
+function catSelect(o, kind, current){
+  const co = catOptions(o, kind);
+  const others = co.kids.length ? co.others.filter(c=>!isKidCat(c)) : co.others;   // ein Eintrag gehört zu genau einem Kind
+  const own = co.own.includes(current) ? co.own : [...co.own, current];
+  const opt = c => `<option value="${esc(c)}" ${c===current?"selected":""}>${esc(c)}</option>`;
+  return `<select id="eCat" class="catsel" onchange="$('#eCatNew').hidden = this.value!=='__new'; if(this.value==='__new') $('#eCatNew').focus()">
+    <optgroup label="In dieser Liste">${kidLast(own, co.kids).map(opt).join("")}</optgroup>
+    ${others.length?`<optgroup label="Weitere Kategorien">${others.map(opt).join("")}</optgroup>`:""}
+    <option value="__new">+ Neue Kategorie…</option></select>`;
+}
 function editItem(kind,id){
   const o=getObj(kind), cur=o.items.find(x=>x.id===id), isEv = kind==="event";
   const kids = isEv ? (o.kids||[]) : [];
@@ -1400,8 +1499,8 @@ function editItem(kind,id){
   dialog(`<h2>Eintrag bearbeiten</h2>
     <label class="f">Text</label><input type="text" id="eText" value="${esc(shownText)}">
     ${owner?`<p class="hint" style="margin:4px 0 0">Gilt für ${esc(owner)}. Der Name in Klammern wird automatisch angehängt.</p>`:""}
-    <label class="f">Kategorie</label><input type="text" id="eCat" value="${esc(cur.cat||"Sonstiges")}" list="catList">
-    <datalist id="catList">${allCats().map(c=>`<option value="${esc(c)}">`).join("")}</datalist>
+    <label class="f" for="eCat">Kategorie</label>${catSelect(o, kind, cur.cat||"Sonstiges")}
+    <input type="text" id="eCatNew" placeholder="Name der neuen Kategorie" hidden style="margin-top:6px">
     <label class="tpl-pick" style="border:0;margin-top:8px"><input type="checkbox" id="ePer" ${cur.perKid?"checked":""}>
       <span style="flex:1"><b>Pro Kind</b><br><span class="hint" style="margin:0">Bei mehreren Kindern erscheint der Eintrag einmal je Kind, z. B. „${esc(shownText)} (Kind 1)“. In Kind-Kategorien wie „Kind – Kleidung“ gilt das ohnehin.</span></span></label>
     <div class="actions"><button class="btn danger" data-v="del">Löschen</button><span style="flex:1"></span>
@@ -1411,7 +1510,7 @@ function editItem(kind,id){
     if(v!=="ok") return;
     const t=$("#eText").value.trim(); if(!t) return;
     const o2=getObj(kind), it=o2?.items.find(x=>x.id===id); if(!it){ toast("Eintrag wurde inzwischen gelöscht"); return; }
-    const cat=$("#eCat").value.trim()||"Sonstiges", per=$("#ePer").checked;
+    const cat=($("#eCat").value==="__new" ? ($("#eCatNew").value||"").trim() : $("#eCat").value) || cur.cat || "Sonstiges", per=$("#ePer").checked;
     it.text = owner ? kidText(t, owner) : t; it.cat = cat;
     const k2 = isEv ? (o2.kids||[]) : [];
     if(isEv && k2.length>1 && per !== !!it.perKid){
@@ -1442,6 +1541,7 @@ function listMenu(kind){
             <button data-v="dup">${I.copy}Vorlage duplizieren</button>`}
     <button data-v="collab">${I.people}${o.share?"Gemeinsame Liste – einladen":"Gemeinsam bearbeiten"}</button>
     ${isEv?`<button data-v="kid">${I.kid}Kind hinzufügen</button>`:""}
+    <button data-v="newcat">${I.plus}Neue Kategorie anlegen</button>
     <button data-v="paste">${I.paste}Einträge aus Text einfügen</button>
     <button data-v="text">${I.text}Als Text teilen (z. B. WhatsApp)</button>
     <button data-v="share">${I.upload}Als Datei teilen / exportieren</button>
@@ -1456,6 +1556,7 @@ function listMenu(kind){
     if(v==="newev") newEventDialog(o.id);
     if(v==="collab") startSharing(o);
     if(v==="paste") pasteItemsDialog(kind);
+    if(v==="newcat") newCatDialog(kind);
     if(v==="kid") addKidDialog(o);
     if(v==="dup"){ const c=structuredClone(o); delete c.share; c.id=uid(); c.name+=" (Kopie)"; c.items.forEach(i=>i.id=uid()); db.templates.push(c); save(); go({name:"template",id:c.id}); }
     if(v==="share") exportOne(kind,o);
@@ -1903,20 +2004,21 @@ function norm(id, r){
   return id === "__p"
     ? {kind: r.kind === "template" ? "template" : "event", name: String(r.name || ""), icon: String(r.icon || ""), date: String(r.date || ""),
        ...(Array.isArray(r.kids) && r.kids.length ? {kids: r.kids.map(String).slice(0,9)} : {}),
-       ...(r.group ? {group: String(r.group)} : {})}
+       ...(r.group ? {group: String(r.group)} : {}),
+       ...(Array.isArray(r.ecats) && r.ecats.length ? {ecats: r.ecats.map(String)} : {})}
     : {text: String(r.text || ""), cat: String(r.cat || "Sonstiges"), done: !!r.done, o: +r.o || 0, ...(r.perKid ? {perKid: true} : {})};
 }
 const sig = (id, r) => JSON.stringify(norm(id, r));
 function records(o){
   const isEv = kindOf(o) === "event";
-  const recs = {__p: norm("__p", {kind: isEv ? "event" : "template", name: o.name, icon: o.icon, date: isEv ? o.date : "", kids: isEv ? o.kids : null, group: isEv ? "" : (o.group||"")})};
+  const recs = {__p: norm("__p", {kind: isEv ? "event" : "template", name: o.name, icon: o.icon, date: isEv ? o.date : "", kids: isEv ? o.kids : null, group: isEv ? "" : (o.group||""), ecats: o.emptyCats||null})};
   let max = 0; o.items.forEach(i=>{ if (typeof i.o === "number" && i.o > max) max = i.o; });
   o.items.forEach(i=>{ if (typeof i.o !== "number") i.o = ++max; recs[i.id] = norm(i.id, {...i, done: isEv && i.done}); });
   return recs;
 }
 function fromRecords(o, recs){
   const isEv = kindOf(o) === "event", p = recs.__p;
-  if (p){ if (p.name) o.name = p.name; if (p.icon) o.icon = p.icon; if (isEv){ o.date = p.date || ""; if (p.kids) o.kids = p.kids; else delete o.kids; } else { if (p.group) o.group = p.group; else delete o.group; } }
+  if (p){ if (p.name) o.name = p.name; if (p.icon) o.icon = p.icon; if (isEv){ o.date = p.date || ""; if (p.kids) o.kids = p.kids; else delete o.kids; } else { if (p.group) o.group = p.group; else delete o.group; } if (p.ecats) o.emptyCats = p.ecats; else delete o.emptyCats; }
   o.items = Object.entries(recs).filter(([id])=>id !== "__p").sort((a, b)=>a[1].o - b[1].o)
     .map(([id, r])=>({id, text: r.text, cat: r.cat, o: r.o, ...(r.perKid ? {perKid: true} : {}), ...(isEv ? {done: !!r.done} : {})}));
 }
