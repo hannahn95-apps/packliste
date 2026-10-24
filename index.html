@@ -25,9 +25,24 @@
   --bg:#141917; --card:#1d2421; --text:#e7ece9; --muted:#97a39e; --line:#2c3531;
   --accent:#5fb39b; --accent-soft:#23382f; --danger:#e07a70; --done:#5d6864; --shadow:none;
 }
+/* Akzentfarben (Einstellungen → Design) */
+:root[data-accent="blau"]{--accent:#2f5f8f;--accent-soft:#dde8f3}
+@media (prefers-color-scheme: dark){:root[data-accent="blau"]:not([data-theme="light"]){--accent:#7aaee0;--accent-soft:#1d2b3a}}
+:root[data-accent="blau"][data-theme="dark"]{--accent:#7aaee0;--accent-soft:#1d2b3a}
+:root[data-accent="beere"]{--accent:#8f2f5f;--accent-soft:#f3dde8}
+@media (prefers-color-scheme: dark){:root[data-accent="beere"]:not([data-theme="light"]){--accent:#e08ab4;--accent-soft:#3a1d2b}}
+:root[data-accent="beere"][data-theme="dark"]{--accent:#e08ab4;--accent-soft:#3a1d2b}
+:root[data-accent="orange"]{--accent:#a8541c;--accent-soft:#f6e4d6}
+@media (prefers-color-scheme: dark){:root[data-accent="orange"]:not([data-theme="light"]){--accent:#e7a26b;--accent-soft:#3a2618}}
+:root[data-accent="orange"][data-theme="dark"]{--accent:#e7a26b;--accent-soft:#3a2618}
+:root[data-accent="grau"]{--accent:#4a5560;--accent-soft:#e3e7eb}
+@media (prefers-color-scheme: dark){:root[data-accent="grau"]:not([data-theme="light"]){--accent:#a8b3bd;--accent-soft:#262c31}}
+:root[data-accent="grau"][data-theme="dark"]{--accent:#a8b3bd;--accent-soft:#262c31}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--text);
-  font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+html{font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+:root[data-size="l"]{font-size:18px}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{font:inherit}
 button,input,select,textarea{font:inherit;color:inherit}
 header{position:sticky;top:0;z-index:5;background:var(--bg);
   padding:calc(env(safe-area-inset-top) + 14px) 16px 10px;display:flex;align-items:center;gap:8px}
@@ -66,6 +81,31 @@ nav button.active{color:var(--accent);font-weight:600}
 .group h3{margin:0;padding:10px 16px;font-size:.85rem;color:var(--accent);background:var(--accent-soft);
   display:flex;justify-content:space-between}
 .group h3 span{color:var(--muted);font-weight:500}
+.group h3{align-items:center;gap:6px;cursor:pointer}
+.group h3 .cname{flex:1;color:var(--accent);font-weight:600}
+.group h3 .hadd svg{width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:2.4;stroke-linecap:round;display:block}
+.group h3.ed{cursor:default;padding-right:6px}
+.group h3 .mv{width:32px;height:32px}
+.group h3 .mv svg{width:18px;height:18px;stroke:var(--accent)}
+.group h3 .mv:disabled{opacity:.3}
+.group.target{outline:2px solid var(--accent);outline-offset:-2px}
+.sel{width:24px;height:24px;border-radius:50%;border:2px solid var(--muted);flex:none;display:grid;place-items:center;cursor:pointer}
+.sel svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.item.selected{background:var(--accent-soft)}
+.item.selected .sel{background:var(--accent);border-color:var(--accent)}
+.item.selected .sel svg{opacity:1}
+.selbar{align-items:center}
+.selbar .selcount{flex:1;font-weight:600;padding-left:4px}
+.addbar.selbar button{font-size:1rem;width:auto}
+.selbar .btn{width:auto;flex:none;padding:10px 16px}
+.addbar.selbar .iconbtn{width:44px;height:44px;background:none;color:var(--text);border-radius:50%}
+.selbar .iconbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.addbar.selbar .del-sel{color:var(--danger)}
+.catlist{display:flex;flex-wrap:wrap;gap:6px}
+.catbtn{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 12px;cursor:pointer;font-size:.9rem}
+.catbtn:active{background:var(--accent-soft)}
+#newCat.flash{animation:flash .6s}
+@keyframes flash{0%{background:var(--accent-soft);border-color:var(--accent)}100%{}}
 .item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line);min-height:52px}
 .group h3 + .item{border-top:0}
 .check{width:26px;height:26px;border-radius:8px;border:2px solid var(--muted);flex:none;display:grid;place-items:center;cursor:pointer}
@@ -149,12 +189,27 @@ mark{background:transparent;color:var(--accent);font-weight:700}
 .settings-row{background:var(--card);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;
   box-shadow:var(--shadow);cursor:pointer;display:flex;gap:12px;align-items:center}
 .settings-row .sub{color:var(--muted);font-size:.85rem}
+.settings-row.design{cursor:default}
+.settings-row .body{flex:1;min-width:0}
+.seg{display:flex;gap:4px;background:var(--bg);border-radius:12px;padding:4px;margin-top:8px}
+.seg button{flex:1;border:0;background:none;border-radius:9px;padding:8px 4px;cursor:pointer;font-size:.9rem;color:var(--muted)}
+.seg button.on{background:var(--card);color:var(--text);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.swatches{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.sw{width:38px;height:38px;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 1px var(--line);cursor:pointer;display:grid;place-items:center}
+.sw.on{box-shadow:0 0 0 2px var(--text)}
+.sw svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .shared{display:inline-flex;align-items:center;gap:4px;font-size:.8rem;color:var(--accent);font-weight:600}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block}
 .dot.off{background:var(--muted)}
 .dot.err{background:var(--danger)}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap}
 .btnrow .btn{flex:1}
+.btn.wide{width:100%;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.scanbox{position:relative;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:1;max-width:100%}
+.scanbox video{width:100%;height:100%;object-fit:cover;display:block}
+.scanframe{position:absolute;inset:18%;border:3px solid rgba(255,255,255,.85);border-radius:16px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+#txOut{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;resize:vertical}
 .memb{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line)}
 .memb b{flex:1;font-weight:600}
 .memb small{color:var(--muted)}
@@ -166,7 +221,7 @@ mark{background:transparent;color:var(--accent);font-weight:700}
 <header id="hdr"></header>
 <main id="main"></main>
 <div id="bottom"></div>
-<input type="file" id="fileIn" accept=".json,application/json" hidden>
+<input type="file" id="fileIn" hidden>
 <div class="toast" id="toast"></div>
 
 <dialog id="dlg"></dialog>
@@ -194,6 +249,10 @@ const I = {
   kid:'<svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="3"/><path d="M8 21v-6l-2-4h12l-2 4v6"/><path d="M8 11l4 2 4-2"/></svg>',
   grip:'<svg viewBox="0 0 24 24"><path d="M5 9h14M5 15h14"/></svg>',
   chev:'<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
+  up:'<svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg>',
+  selall:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 12l3 3 5-6"/></svg>',
+  qr:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M17 21h4v-4M14 21v-3"/></svg>',
+  text:'<svg viewBox="0 0 24 24"><path d="M4 6h16M4 11h16M4 16h10"/><path d="M15 20l3-3 3 3"/></svg>',
   people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.4 0 4.1 1.5 4.5 4.5"/></svg>',
   gear:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'
 };
@@ -212,6 +271,7 @@ const EMOJIS = EMOJI_GROUPS.flatMap(g=>g[1]);
 
 /* ---------- Daten ---------- */
 const KEY = "packliste.v1";
+const APP_VERSION = "24.10.2026 c";
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
 const mk = (cat, list) => list.map(t => ({id:uid(), text:t, cat}));
 const mkPer = (cat, list, per) => list.map(t => ({id:uid(), text:t, cat, ...(per.includes(t)?{perKid:true}:{})}));
@@ -784,17 +844,29 @@ function relDays(d){
 let toastT;
 function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2200); }
 function cats(items){ const s=[]; items.forEach(i=>{ const c=i.cat||"Sonstiges"; if(!s.includes(c)) s.push(c); }); return s; }
+// Kategorien, die in Vorlagen vorkommen (ohne alte Standardkategorien und ohne Kind-Namen aus Packlisten)
 function allCats(){
-  const s = new Set(["Kleidung","Hygiene","Technik","Dokumente","Sonstiges"]);
+  const s = new Set();
   db.templates.forEach(t=>t.items.forEach(i=>s.add(i.cat||"Sonstiges")));
-  db.events.forEach(e=>e.items.forEach(i=>s.add(i.cat||"Sonstiges")));
+  s.add("Sonstiges");
   return [...s];
 }
+// Auswahl für eine Liste: erst die Kategorien dieser Liste, dann weitere aus den Vorlagen
+function catOptions(o, kind){
+  const kids = kind==="event" ? (o.kids||[]) : [];
+  const generic = c => { if(!kids.length) return null; const k = kids.find(k=>ofKid(c,k)); return k ? (c===k ? "Kind" : "Kind"+c.slice(k.length)) : null; };
+  const own = cats(o.items);
+  const forAll = kids.length ? [...new Set(own.map(generic).filter(Boolean))] : [];
+  const used = new Set([...own, ...forAll]);
+  const others = allCats().filter(c=>!used.has(c) && !(kids.length && kids.some(k=>ofKid(c,k))));
+  return {own, forAll, others, kids};
+}
+const catLabel = (c, kids) => kids.length && isKidCat(c) ? `${c} (${kids.length>1?"alle Kinder":kids[0]})` : c;
 
 /* ---------- Navigation ---------- */
 let view = {name:"events"};
 let editing = false;
-function go(v){ view = v; editing = false; render(); window.scrollTo(0,0);
+function go(v){ view = v; editing = false; selected.clear(); catManual = false; lastCat = ""; render(); window.scrollTo(0,0);
   if(v.name==="event"||v.name==="template") history.pushState({d:1},""); }
 window.addEventListener("popstate", ()=>{ if(view.name==="event") go({name:"events"}); else if(view.name==="template") go({name:"templates"}); });
 function back(){ if(history.state && history.state.d) history.back(); else go({name: view.name==="event"?"events":"templates"}); }
@@ -969,19 +1041,36 @@ function renderTplList(){
   }).join("");
 }
 
+const ACCENTS = [["","Grün","#2f6f5e"],["blau","Blau","#2f5f8f"],["beere","Beere","#8f2f5f"],["orange","Orange","#a8541c"],["grau","Grau","#4a5560"]];
+function applyDesign(){
+  const st = db.settings, r = document.documentElement;
+  if(st.theme==="light"||st.theme==="dark") r.dataset.theme = st.theme; else delete r.dataset.theme;
+  if(st.accent) r.dataset.accent = st.accent; else delete r.dataset.accent;
+  if(st.size==="l") r.dataset.size = "l"; else delete r.dataset.size;
+  const m = document.querySelector('meta[name="theme-color"]');
+  if(m) setTimeout(()=>{ m.content = getComputedStyle(r).getPropertyValue("--bg").trim() || "#2f6f5e"; }, 0);
+}
+function setDesign(key, val){ db.settings[key] = val; saveLocal(); applyDesign(); render(); }
 function renderSettings(hdr,main,bottom){
   hdr.innerHTML = `<h1>Einstellungen</h1>`;
+  const st = db.settings, seg = (key, opts) => `<div class="seg">${opts.map(([v,l])=>`<button type="button" class="${(st[key]||"")===v?"on":""}" onclick="setDesign('${key}','${v}')">${l}</button>`).join("")}</div>`;
   main.innerHTML = `
+    <div class="section-title">Design</div>
+    <div class="settings-row design"><div class="body"><b>Hell oder dunkel</b>${seg("theme",[["","Wie Handy"],["light","Hell"],["dark","Dunkel"]])}</div></div>
+    <div class="settings-row design"><div class="body"><b>Farbe</b>
+      <div class="swatches">${ACCENTS.map(([v,l,c])=>`<button type="button" class="sw ${(st.accent||"")===v?"on":""}" style="background:${c}" onclick="setDesign('accent','${v}')" aria-label="${l}" title="${l}">${(st.accent||"")===v?I.check:""}</button>`).join("")}</div></div></div>
+    <div class="settings-row design"><div class="body"><b>Schriftgröße</b>${seg("size",[["","Normal"],["l","Groß"]])}</div></div>
     <div class="section-title">Daten</div>
     <div class="settings-row" onclick="exportAll()"><div class="body"><b>Sicherung exportieren</b><div class="sub">Alle Vorlagen und Ereignisse als Datei speichern oder teilen</div></div></div>
-    <div class="settings-row" onclick="pickImport()"><div class="body"><b>Datei importieren</b><div class="sub">Sicherung oder geteilte Liste laden (wird hinzugefügt)</div></div></div>
+    <div class="settings-row" onclick="pickImport()"><div class="body"><b>Datei importieren</b><div class="sub">Sicherung, geteilte Liste (.json) oder Text-Liste (.txt) laden</div></div></div>
     <div class="settings-row" onclick="restoreDefaults()"><div class="body"><b>Beispielvorlagen wiederherstellen</b><div class="sub">Fügt die mitgelieferten Vorlagen erneut hinzu</div></div></div>
     <div class="section-title">Gemeinsam bearbeiten</div>
     <div class="settings-row" onclick="ask('Dein Name', myName(), 'z. B. Anna', n=>{ lsSet('myName', n.slice(0,30)); render(); })"><div class="body"><b>Dein Name</b><div class="sub">${myName()?esc(myName()):"Noch nicht festgelegt – sehen die anderen bei gemeinsamen Listen"}</div></div></div>
-    <div class="settings-row" onclick="joinDialog()"><div class="body"><b>Gemeinsamer Liste beitreten</b><div class="sub">Einladungslink einfügen</div></div></div>
+    <div class="settings-row" onclick="joinDialog()"><div class="body"><b>Gemeinsamer Liste beitreten</b><div class="sub">Einladungslink einfügen oder QR-Code scannen</div></div></div>
     <div class="settings-row" onclick="serverDialog()"><div class="body"><b>Server</b><div class="sub">${esc(syncServer())}</div></div></div>
     <div class="section-title">Info</div>
-    <p class="hint">Deine Listen bleiben auf diesem Gerät. Gemeinsame Listen werden verschlüsselt über ntfy.sh abgeglichen – der Schlüssel steckt nur im Einladungslink.</p>`;
+    <p class="hint">Deine Listen bleiben auf diesem Gerät. Gemeinsame Listen werden verschlüsselt über ntfy.sh abgeglichen – der Schlüssel steckt nur im Einladungslink.</p>
+    <p class="hint">App-Version ${APP_VERSION} · Vorlagenstand ${db.tplVersion||1}</p>`;
   bottom.innerHTML = navBar("settings");
 }
 
@@ -1005,19 +1094,27 @@ function renderList(hdr,main,bottom,kind){
     html += `${o.share?`<div class="progress">${sharedLine(o)}</div>`:""}<p class="hint">Änderungen hier wirken nur auf künftige Ereignisse.</p>
       <div class="toggle"><span class="chip on" onclick="newEventDialog('${o.id}')">＋ Ereignis aus dieser Vorlage</span></div>`;
   }
-  if(editing) html += `<p class="hint">Bearbeitungsmodus: Am Griff ${I.grip.replace("<svg",'<svg class="ico"')} ziehen zum Verschieben (auch in eine andere Kategorie), Eintrag antippen zum Ändern, Papierkorb zum Löschen. Tipp: Auch ohne Bearbeitungsmodus lässt sich ein Eintrag verschieben – kurz gedrückt halten und ziehen.</p>`;
+  if(editing) html += `<p class="hint">Bearbeitungsmodus: Kreis antippen zum Markieren (mehrere möglich) und dann gesammelt verschieben. Am Griff ${I.grip.replace("<svg",'<svg class="ico"')} ziehen zum Umsortieren, Pfeile an der Kategorie ändern ihre Reihenfolge. Eintrag antippen zum Ändern.</p>`;
   const list = cats(o.items);
+  curCats = list;
   let shown = 0;
-  list.forEach(c=>{
+  list.forEach((c,ci)=>{
     let items = o.items.filter(i=>(i.cat||"Sonstiges")===c);
     const total = items.length, doneN = items.filter(i=>i.done).length;
     if(isEv && db.settings.hideDone && !editing) items = items.filter(i=>!i.done);
     if(!items.length) return;
     shown += items.length;
     if(isEv && !editing) items = [...items.filter(i=>!i.done), ...items.filter(i=>i.done)];   // beim Bearbeiten echte Reihenfolge zeigen
-    html += `<div class="group ${editing?"editing":""}" data-cat="${esc(c)}"><h3>${esc(c)}${isEv?`<span>${doneN}/${total}</span>`:`<span>${total}</span>`}</h3>` +
-      items.map(i=>`<div class="item ${isEv&&i.done?"done":""}" data-id="${i.id}">
-        ${editing?`<span class="handle" aria-label="Verschieben">${I.grip}</span>`:""}
+    const count = isEv?`<span class="cnt">${doneN}/${total}</span>`:`<span class="cnt">${total}</span>`;
+    const head = editing
+      ? `<h3 class="ed"><span class="cname">${esc(c)}</span>${count}
+          <button type="button" class="iconbtn mv" onclick="moveCat(${ci},-1)" ${ci===0?"disabled":""} aria-label="Kategorie nach oben">${I.up}</button>
+          <button type="button" class="iconbtn mv" onclick="moveCat(${ci},1)" ${ci===list.length-1?"disabled":""} aria-label="Kategorie nach unten">${I.chev}</button>
+          <button type="button" class="iconbtn mv" onclick="selectCat(${ci})" aria-label="Alle in dieser Kategorie auswählen">${I.selall}</button></h3>`
+      : `<h3 onclick="pickCat(${ci})" title="Einträge in dieser Kategorie hinzufügen"><span class="cname">${esc(c)}</span>${count}<span class="hadd">${I.plus}</span></h3>`;
+    html += `<div class="group ${editing?"editing":""} ${!editing && catManual && c===lastCat?"target":""}" data-cat="${esc(c)}">${head}` +
+      items.map(i=>`<div class="item ${isEv&&i.done?"done":""} ${selected.has(i.id)?"selected":""}" data-id="${i.id}">
+        ${editing?`<span class="handle" aria-label="Verschieben">${I.grip}</span><span class="sel" onclick="toggleSel('${i.id}')" role="checkbox" aria-checked="${selected.has(i.id)}" aria-label="Auswählen">${I.check}</span>`:""}
         ${isEv?`<div class="check" onclick="toggleItem('${i.id}')">${I.check}</div>`:""}
         <div class="txt" onclick="${editing||!isEv?`editItem('${kind}','${i.id}')`:`toggleItem('${i.id}')`}">${esc(i.text)}${!isEv && i.perKid && !isKidCat(i.cat||"") ? ` <span class="perkid">pro Kind</span>` : ""}</div>
         <button class="iconbtn del" onclick="delItem('${kind}','${i.id}')" aria-label="Löschen">${I.trash}</button>
@@ -1026,9 +1123,22 @@ function renderList(hdr,main,bottom,kind){
   if(!o.items.length) html += `<div class="empty"><div class="big">📝</div>Die Liste ist leer.<br>Füge unten Einträge hinzu.</div>`;
   else if(!shown) html += `<div class="empty"><div class="big">🎉</div>Alles gepackt!</div>`;
   main.innerHTML = html;
-  const opts = allCats().map(c=>`<option ${c===lastCat?"selected":""}>${esc(c)}</option>`).join("") + `<option value="__new">+ Neue Kategorie…</option>`;
+  if(editing && selected.size){                 // Mehrfachauswahl: Aktionsleiste statt Eingabezeile
+    bottom.innerHTML = `<div class="addbar selbar"><span class="selcount">${selected.size} ausgewählt</span>
+      <button type="button" class="btn primary" onclick="moveSelDialog('${kind}')">Verschieben</button>
+      <button type="button" class="iconbtn del-sel" onclick="delSel('${kind}')" aria-label="Ausgewählte löschen">${I.trash}</button>
+      <button type="button" class="iconbtn" onclick="clearSel()" aria-label="Auswahl aufheben">${I.x}</button></div>`;
+    return;
+  }
+  const co = catOptions(o, kind);
+  if(!lastCat || (![...co.own,...co.forAll,...co.others].includes(lastCat))) lastCat = co.forAll[0] || co.own[0] || "Sonstiges";
+  const opt = c => `<option value="${esc(c)}" ${c===lastCat?"selected":""}>${esc(catLabel(c, co.kids))}</option>`;
+  const opts = (co.forAll.length ? `<optgroup label="Für ${co.kids.length>1?"alle Kinder":esc(co.kids[0])}">${co.forAll.map(opt).join("")}</optgroup>` : "")
+    + `<optgroup label="In dieser Liste">${co.own.filter(c=>!(co.kids.length===1 && ofKid(c,co.kids[0]))).map(opt).join("")}</optgroup>`
+    + (co.others.length ? `<optgroup label="Weitere Kategorien">${co.others.map(opt).join("")}</optgroup>` : "")
+    + `<option value="__new">+ Neue Kategorie…</option>`;
   bottom.innerHTML = `<form class="addbar" onsubmit="addItem(event,'${kind}')">
-    <input id="newItem" placeholder="Neuer Eintrag…" autocomplete="off" enterkeyhint="done">
+    <input id="newItem" placeholder="${catManual ? `Neu in „${esc(catLabel(lastCat, co.kids))}“…` : "Neuer Eintrag…"}" autocomplete="off" enterkeyhint="done" oninput="guessSoon('${kind}')">
     <select id="newCat" onchange="catChange(this)">${opts}</select>
     <button type="submit" aria-label="Hinzufügen">＋</button></form>`;
 }
@@ -1052,7 +1162,7 @@ document.addEventListener("pointerdown", e=>{
   if(view.name!=="event" && view.name!=="template") return;
   const h = e.target.closest(".handle");
   if(h && editing){ const row = h.closest(".item"); if(row){ e.preventDefault(); startDrag(row, e.pointerId, e.clientY, h); } return; }
-  const row = e.target.closest("#main .item"); if(!row || e.target.closest(".del") || e.button>0) return;
+  const row = e.target.closest("#main .item"); if(!row || e.target.closest(".del") || e.target.closest(".sel") || e.button>0) return;
   clearTimeout(longPress?.t);
   longPress = {row, id:e.pointerId, x:e.clientX, y:e.clientY, t:setTimeout(()=>{
     if(!longPress) return;
@@ -1116,28 +1226,125 @@ document.addEventListener("pointerup", endDrag);
 document.addEventListener("pointercancel", endDrag);
 
 /* ---------- Aktionen Liste ---------- */
-let lastCat = "Sonstiges";
+let lastCat = "", catManual = false, curCats = [], selected = new Set(), guessT = null, lastGuess = null;
 function catChange(sel){
   if(sel.value==="__new"){
     sel.value = lastCat;
     ask("Neue Kategorie","","z. B. Strand", n=>{
-      lastCat=n; const o=document.createElement("option"); o.textContent=n; o.selected=true;
+      lastCat=n; catManual=true; const o=document.createElement("option"); o.value=n; o.textContent=n; o.selected=true;
       sel.insertBefore(o, sel.lastElementChild); $("#newItem")?.focus();
     });
-  } else lastCat = sel.value;
+  } else { lastCat = sel.value; catManual = true; }
+}
+// Kategorie antippen: neue Einträge landen dort
+function pickCat(ci){
+  const c = curCats[ci]; if(!c) return;
+  const o = getObj(view.name), kids = view.name==="event" ? (o?.kids||[]) : [];
+  const k = kids.length===1 ? kids.find(k=>ofKid(c,k)) : null;   // bei einem Kind über die allgemeine Kategorie, sonst genau dieses Kind
+  lastCat = k ? (c===k ? "Kind" : "Kind"+c.slice(k.length)) : c;
+  catManual = true; render();
+  const ni = $("#newItem"); if(ni){ ni.focus(); }
+}
+// Kategorie zum eingegebenen Text erraten: erst in dieser Liste, dann in allen Vorlagen
+const stem = t => fold(t).replace(/\s*\([^)]*\)\s*$/,"").replace(/(en|n|e|s)$/,"");
+function guessCat(text, o, kind){
+  const st = stem(text); if(st.length<2) return null;
+  const kids = kind==="event" ? (o.kids||[]) : [];
+  const toGeneric = c => { const k = kids.find(k=>ofKid(c,k)); return k ? (c===k ? "Kind" : "Kind"+c.slice(k.length)) : c; };
+  const mine = o.items.find(i=>stem(i.text)===st);
+  if(mine) return {cat: toGeneric(mine.cat||"Sonstiges"), perKid: !!mine.perKid};
+  const count = new Map();
+  db.templates.forEach(t=>t.items.forEach(i=>{ if(stem(i.text)===st){ const key=i.cat||"Sonstiges"; const c=count.get(key)||{n:0,perKid:false}; c.n++; c.perKid = c.perKid || !!i.perKid; count.set(key,c); } }));
+  if(!count.size) return null;
+  const [cat, c] = [...count.entries()].sort((a,b)=>b[1].n-a[1].n)[0];
+  return {cat, perKid:c.perKid};
+}
+function guessSoon(kind){
+  clearTimeout(guessT);
+  guessT = setTimeout(()=>{
+    const inp = $("#newItem"), sel = $("#newCat"); if(!inp || !sel) return;
+    const first = inp.value.split(/[;\n]/)[0].trim();
+    const g = catManual ? null : guessCat(first, getObj(kind), kind);
+    lastGuess = g ? {...g, text:first} : null;
+    if(!g || sel.value===g.cat) return;
+    if(![...sel.options].some(op=>op.value===g.cat)){ const op=document.createElement("option"); op.value=g.cat; op.textContent=g.cat; sel.insertBefore(op, sel.lastElementChild); }
+    sel.value = g.cat; lastCat = g.cat;
+    sel.classList.remove("flash"); void sel.offsetWidth; sel.classList.add("flash");
+  }, 120);
 }
 function addItem(ev,kind){
   ev.preventDefault();
   const inp=$("#newItem"), text=inp.value.trim(); if(!text) return;
   inp.value="";
-  const o=getObj(kind); const cat=$("#newCat").value==="__new"?"Sonstiges":$("#newCat").value;
-  lastCat = cat;
-  text.split(/\s*[;\n]\s*/).filter(Boolean).forEach(t=>o.items.push({id:uid(),text:t,cat,...(kind==="event"?{done:false}:{})}));
+  const o=getObj(kind), isEv = kind==="event", kids = isEv ? (o.kids||[]) : [];
+  const chosen = $("#newCat").value==="__new" ? (lastCat||"Sonstiges") : $("#newCat").value;
+  text.split(/\s*[;\n]\s*/).filter(Boolean).forEach(t=>{
+    let cat = chosen, perKid = false;
+    if(!catManual){ const g = guessCat(t, o, kind); if(g){ cat = g.cat; perKid = g.perKid; } }
+    let news;
+    if(isEv && kids.length && isKidCat(cat)) news = kids.map(k=>({text:t, cat:kidCat(cat,k)}));                       // pro Kind-Kategorie
+    else if(isEv && kids.length>1 && perKid) news = kids.map(k=>({text:kidText(t,k), cat, perKid:true}));          // pro Kind-Eintrag
+    else news = [{text:t, cat, ...(perKid?{perKid:true}:{})}];
+    news.forEach(n=>{
+      const it = {id:uid(), ...n, ...(isEv?{done:false}:{})};
+      const last = o.items.map(i=>i.cat).lastIndexOf(it.cat);
+      if(last>=0) o.items.splice(last+1, 0, it); else o.items.push(it);
+    });
+    lastCat = chosen;
+  });
   save(); render(); const ni=$("#newItem"); ni.focus();
+}
+/* Mehrfachauswahl im Bearbeitungsmodus */
+function toggleSel(id){ if(selected.has(id)) selected.delete(id); else selected.add(id); render(); }
+function clearSel(){ selected.clear(); render(); }
+function selectCat(ci){
+  const o = getObj(view.name), c = curCats[ci]; if(!o || !c) return;
+  const ids = o.items.filter(i=>(i.cat||"Sonstiges")===c).map(i=>i.id);
+  const all = ids.every(id=>selected.has(id));
+  ids.forEach(id=> all ? selected.delete(id) : selected.add(id)); render();
+}
+function moveSelDialog(kind){
+  const o = getObj(kind); if(!o || !selected.size) return;
+  const co = catOptions(o, kind), own = co.own;
+  const btn = c => `<button type="button" class="catbtn" data-v="c:${esc(c)}">${esc(c)}</button>`;
+  dialog(`<h2>${selected.size} ${selected.size===1?"Eintrag":"Einträge"} verschieben nach</h2>
+    <label class="f">In dieser Liste</label><div class="catlist">${own.map(btn).join("")}</div>
+    ${co.others.length?`<label class="f">Weitere Kategorien</label><div class="catlist">${co.others.map(btn).join("")}</div>`:""}
+    <label class="f" for="mvNew">Oder neue Kategorie</label>
+    <div class="btnrow"><input type="text" id="mvNew" placeholder="Name der Kategorie" style="flex:3"><button type="button" class="btn primary" data-v="new" style="flex:1">OK</button></div>
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button></div>`,
+  v=>{
+    let target = null;
+    if(v && v.startsWith("c:")) target = v.slice(2);
+    if(v==="new") target = ($("#mvNew").value||"").trim();
+    if(!target) return;
+    const o2 = getObj(kind), moving = o2.items.filter(i=>selected.has(i.id));
+    o2.items = o2.items.filter(i=>!selected.has(i.id));
+    moving.forEach(i=>{ i.cat = target; });
+    const last = o2.items.map(i=>i.cat).lastIndexOf(target);
+    o2.items.splice(last>=0 ? last+1 : o2.items.length, 0, ...moving);
+    o2.items.forEach((it,i)=>{ it.o = i+1; });
+    selected.clear(); save(); render(); toast(`${moving.length} ${moving.length===1?"Eintrag":"Einträge"} nach „${target}“ verschoben`);
+  });
+}
+function delSel(kind){
+  const o = getObj(kind); if(!o) return;
+  const before = o.items.slice(), n = selected.size;
+  o.items = o.items.filter(i=>!selected.has(i.id)); selected.clear(); save(); render();
+  undo(`${n} ${n===1?"Eintrag":"Einträge"} gelöscht`, ()=>{ const o2 = getObj(kind)||o; o2.items = before; save(); render(); });
+}
+/* Reihenfolge der Kategorien */
+function moveCat(ci, dir){
+  const o = getObj(view.name); if(!o) return;
+  const order = cats(o.items), j = ci+dir; if(j<0 || j>=order.length) return;
+  [order[ci], order[j]] = [order[j], order[ci]];
+  o.items = order.flatMap(c=>o.items.filter(i=>(i.cat||"Sonstiges")===c));
+  o.items.forEach((it,i)=>{ it.o = i+1; });
+  save(); render();
 }
 function toggleItem(id){ const o=getObj("event"); const i=o.items.find(x=>x.id===id); i.done=!i.done; save(); render();
   const p=progressOf(o); if(i.done && p.d===p.n) toast("🎉 Alles gepackt!"); }
-function toggleEdit(){ editing=!editing; render(); }
+function toggleEdit(){ editing=!editing; selected.clear(); render(); }
 function toggleHide(){ db.settings.hideDone=!db.settings.hideDone; save(); render(); }
 // Alle Haken entfernen – mit „Rückgängig“ statt Nachfrage
 function resetDone(){
@@ -1204,6 +1411,7 @@ function listMenu(kind){
     <button data-v="collab">${I.people}${o.share?"Gemeinsame Liste – einladen":"Gemeinsam bearbeiten"}</button>
     ${isEv?`<button data-v="kid">${I.kid}Kind hinzufügen</button>`:""}
     <button data-v="paste">${I.paste}Einträge aus Text einfügen</button>
+    <button data-v="text">${I.text}Als Text teilen (z. B. WhatsApp)</button>
     <button data-v="share">${I.upload}Als Datei teilen / exportieren</button>
     <button data-v="del" class="red">${I.trash}${isEv?"Ereignis":"Vorlage"} löschen</button>
   </div><div class="actions"><button class="btn" data-v="">Schließen</button></div>`,
@@ -1219,6 +1427,7 @@ function listMenu(kind){
     if(v==="kid") addKidDialog(o);
     if(v==="dup"){ const c=structuredClone(o); delete c.share; c.id=uid(); c.name+=" (Kopie)"; c.items.forEach(i=>i.id=uid()); db.templates.push(c); save(); go({name:"template",id:c.id}); }
     if(v==="share") exportOne(kind,o);
+    if(v==="text") textDialog(kind);
     if(v==="del") confirmDlg(`„${o.name}“ löschen?`, o.share?"Die Liste verschwindet nur bei dir. Wer sie mit dir teilt, behält sie.":"Das lässt sich nicht rückgängig machen.", "Löschen", ()=>{
       syncLeave(o); const arr=isEv?db.events:db.templates; arr.splice(arr.indexOf(o),1); saveLocal(); back(); });
   });
@@ -1459,7 +1668,10 @@ function parseItemsText(txt, cat){
   const isBullet = l => /^[-•*–]\s*/.test(l);
   const nextLine = i => { for(let j=i+1;j<lines.length;j++) if(lines[j]) return lines[j]; return ""; };
   lines.forEach((l,i)=>{
+    if(/^📋/.test(l)) return;
+    l = l.replace(/^\*(.+)\*$/,"$1").trim();
     if(!l){ if(inBlock){ cat=def; inBlock=false; } return; }
+    if(isBullet(l) && / ✓$/.test(l)){ inBlock=true; const t=l.replace(/^[-•*–]\s*/,"").replace(/\s*✓$/,"").trim(); if(t) out.push({id:uid(),cat,text:t,done:true}); return; }
     if(isBullet(l)){ inBlock=true; const t=l.replace(/^[-•*–]\s*/,"").trim(); if(t) out.push({id:uid(),cat,text:t}); return; }
     const m=l.match(/^([^:]{1,30}):\s*(.+)$/);
     if(m){ out.push({id:uid(),cat:m[1].trim(),text:m[2].trim()}); return; }
@@ -1477,7 +1689,9 @@ function pasteItemsDialog(kind){
     <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Einfügen</button></div>`,
   v=>{
     if(v!=="ok") return; const o2=getObj(kind); if(!o2) return;
-    const before=o2.items.length; mergeItems(o2.items, parseItemsText($("#pItems").value, lastCat), kind==="event");
+    const before=o2.items.length, parsed = parseItemsText($("#pItems").value, lastCat||"Sonstiges");
+    mergeItems(o2.items, parsed, kind==="event");
+    if(kind==="event") parsed.filter(i=>i.done).forEach(i=>{ const it = o2.items.find(x=>x.cat===i.cat && x.text===i.text); if(it) it.done = true; });
     save(); render(); toast(`${o2.items.length-before} Einträge eingefügt`);
   });
   setTimeout(()=>$("#pItems")?.focus(),50);
@@ -1501,7 +1715,8 @@ function newTemplateDialog(){
 
 /* ---------- Dialog ---------- */
 function dialog(html, cb){
-  const d=$("#dlg"); d.innerHTML=html;
+  const d=$("#dlg"); stopScan(); d.innerHTML=html;
+  d.onclose = ()=>stopScan();
   d.onclick = e=>{
     if(e.target===d){ d.close(); return; }
     const b=e.target.closest("[data-v]"); if(!b) return;
@@ -1541,15 +1756,84 @@ function exportOne(kind,o){ shareFile(`${safeName(o.name)}.json`, {app:"packlist
 function pickImport(){ $("#fileIn").value=""; $("#fileIn").click(); }
 $("#fileIn").addEventListener("change", async e=>{
   const f=e.target.files[0]; if(!f) return;
-  try{
-    const data=JSON.parse(await f.text());
-    if(data.app!=="packliste") throw 0;
-    const fix = arr => (arr||[]).filter(x=>x&&x.name&&Array.isArray(x.items)).map(({share,...x})=>({...x,id:uid(),items:x.items.map(i=>({...i,id:uid()}))}));
-    const t=fix(data.templates), ev=fix(data.events);
-    db.templates.push(...t); db.events.push(...ev); save(); render();
-    toast(`Importiert: ${t.length} Vorlage(n), ${ev.length} Ereignis(se)`);
-  }catch(err){ toast("Datei konnte nicht gelesen werden"); }
+  let raw = "";
+  try{ raw = await f.text(); }catch(err){ toast("Datei konnte nicht gelesen werden"); return; }
+  let data = null;
+  try{ data = JSON.parse(raw); }catch(err){}
+  if(data && data.app==="packliste") importData(data);
+  else if(data) toast("Das ist keine Datei der Packliste.");
+  else importText(raw, f.name.replace(/\.[^.]+$/,""));
 });
+// Importierte Listen genau so übernehmen (Kategorien, Haken, Kinder, „pro Kind“, Vorlagen-Kategorie)
+function importData(data){
+  const fix = arr => (arr||[]).filter(x=>x&&x.name&&Array.isArray(x.items)).map(({share,...x})=>({...x,id:uid(),items:x.items.map(i=>({...i,id:uid()}))}));
+  const t = fix(data.templates), ev = fix(data.events);
+  const clash = [...t.filter(x=>db.templates.some(y=>y.name===x.name)), ...ev.filter(x=>db.events.some(y=>y.name===x.name))];
+  const finish = mode=>{
+    const put = (arr, list)=>list.forEach(x=>{
+      const i = arr.findIndex(y=>y.name===x.name);
+      if(mode==="replace" && i>=0){ const keep = arr[i]; arr[i] = {...x, id:keep.id, ...(keep.share?{share:keep.share}:{})}; }
+      else { if(i>=0) x.name = x.name+" (Import)"; arr.push(x); }
+    });
+    put(db.templates, t); put(db.events, ev); save(); render();
+    toast(`Importiert: ${t.length} ${t.length===1?"Vorlage":"Vorlagen"}, ${ev.length} ${ev.length===1?"Ereignis":"Ereignisse"}`);
+    if(t.length+ev.length===1) go(t.length ? {name:"template", id:(db.templates.find(x=>x.name===t[0].name)||{}).id} : {name:"event", id:(db.events.find(x=>x.name===ev[0].name)||{}).id});
+  };
+  if(!clash.length){ finish("add"); return; }
+  dialog(`<h2>Schon vorhanden</h2>
+    <p class="hint" style="margin:0">${clash.length===1?`„${esc(clash[0].name)}“ gibt es schon.`:`${clash.length} Listen gibt es schon mit gleichem Namen.`} Ersetzen oder zusätzlich als Kopie anlegen?</p>
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn" data-v="add">Als Kopie</button><button class="btn primary" data-v="replace">Ersetzen</button></div>`,
+  v=>{ if(v) finish(v); });
+}
+// Text (z. B. aus WhatsApp) als neue Vorlage oder Packliste
+function importText(raw, fallbackName){
+  const m = /^\s*📋\s*(.+?)(?:\s+–\s+.+)?\s*$/m.exec(raw);
+  const name = (m ? m[1] : fallbackName || "Importierte Liste").replace(/\*/g,"").trim();
+  const items = parseItemsText(raw);
+  if(!items.length){ toast("In der Datei wurden keine Einträge gefunden"); return; }
+  dialog(`<h2>Liste aus Text</h2>
+    <p class="hint" style="margin:0">${items.length} Einträge in ${cats(items).length} Kategorien gefunden.</p>
+    <label class="f" for="imName">Name</label><input type="text" id="imName" value="${esc(name)}">
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn" data-v="tpl">Als Vorlage</button><button class="btn primary" data-v="ev">Als Packliste</button></div>`,
+  v=>{
+    if(!v) return;
+    const n = ($("#imName").value||name).trim(), isEv = v==="ev";
+    const o = {id:uid(), name:n, icon:isEv?"🧳":"📦", items:items.map(i=>({...i, ...(isEv?{done:!!i.done}:{})})), ...(isEv?{date:""}:{})};
+    if(!isEv) o.items.forEach(i=>delete i.done);
+    (isEv?db.events:db.templates).push(o); save(); go({name:isEv?"event":"template", id:o.id}); toast("Liste importiert");
+  });
+}
+// Text für WhatsApp & Co. – lässt sich über „Einträge aus Text einfügen“ oder „Datei importieren“ wieder einlesen
+function listText(o, kind, openOnly){
+  const isEv = kind==="event", lines = [];
+  lines.push(`📋 ${o.name}${isEv && o.date ? " – "+fmtDate(o.date) : ""}`);
+  cats(o.items).forEach(c=>{
+    const its = o.items.filter(i=>(i.cat||"Sonstiges")===c && !(openOnly && i.done));
+    if(!its.length) return;
+    lines.push("", `*${c}*`);
+    its.forEach(i=>lines.push(`- ${i.text}${isEv && i.done ? " ✓" : ""}`));
+  });
+  return lines.join("\n");
+}
+function textDialog(kind){
+  const o = getObj(kind), isEv = kind==="event"; if(!o) return;
+  const p = isEv ? progressOf(o) : null;
+  dialog(`<h2>Als Text teilen</h2>
+    ${isEv && p.d ? `<label class="tpl-pick" style="border:0"><input type="checkbox" id="txOpen"><span>Nur noch nicht gepackte Einträge (${p.n-p.d})</span></label>` : ""}
+    <textarea id="txOut" rows="10" readonly style="font-size:.85rem">${esc(listText(o, kind, false))}</textarea>
+    <div class="btnrow" style="margin-top:10px">
+      <button type="button" class="btn primary" onclick="shareText()">Teilen</button>
+      <button type="button" class="btn" onclick="copyText($('#txOut').value,'Text kopiert')">Kopieren</button>
+    </div>
+    <p class="hint">Gepackte Einträge sind mit ✓ markiert. Den Text kannst du später über ⋮ → „Einträge aus Text einfügen“ oder als .txt-Datei wieder einlesen.</p>
+    <div class="actions"><button class="btn" data-v="">Schließen</button></div>`);
+  const cb = $("#txOpen"); if(cb) cb.onchange = ()=>{ $("#txOut").value = listText(getObj(kind)||o, kind, cb.checked); };
+}
+async function shareText(){
+  const t = $("#txOut")?.value || ""; if(!t) return;
+  if(navigator.share){ try{ await navigator.share({text:t}); return; }catch(e){ if(e.name==="AbortError") return; } }
+  copyText(t, "Text kopiert – jetzt z. B. in WhatsApp einfügen");
+}
 function restoreDefaults(){
   const have=new Set(db.templates.map(t=>t.name)); const add=defaultData().templates.filter(t=>!have.has(t.name));
   db.templates.push(...add); save(); toast(add.length?`${add.length} Vorlage(n) wiederhergestellt`:"Alle Beispielvorlagen sind schon vorhanden");
@@ -1877,13 +2161,56 @@ function joinDialog(){
   dialog(`<h2>Gemeinsamer Liste beitreten</h2>
     <p class="hint" style="margin:0">Tippe einfach auf den Einladungslink, den du bekommen hast – oder füge ihn hier ein.</p>
     <label class="f" for="joinIn">Einladungslink</label><input type="text" id="joinIn" placeholder="https://…#join=…" autocomplete="off">
+    <button type="button" class="btn wide" data-v="scan">${I.qr} QR-Code scannen</button>
     <div class="actions"><button class="btn" data-v="">Abbrechen</button><button class="btn primary" data-v="ok">Weiter</button></div>`,
   v=>{
+    if (v === "scan"){ setTimeout(scanDialog, 0); return; }
     if (v !== "ok") return;
     const inv = parseInvite($("#joinIn").value);
     if (inv) setTimeout(()=>openJoin(inv), 0); else toast("Das ist kein gültiger Einladungslink.");
   });
   setTimeout(()=>$("#joinIn")?.focus(), 50);
+}
+
+/* QR-Code mit der Kamera lesen (nur Einladungslinks dieser App werden angenommen) */
+let scanStream = null, scanTimer = null;
+function stopScan(){
+  clearTimeout(scanTimer); scanTimer = null;
+  if (scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream = null; }
+}
+async function scanDialog(){
+  if (!("BarcodeDetector" in window) || !navigator.mediaDevices?.getUserMedia){
+    dialog(`<h2>QR-Code scannen</h2>
+      <p class="hint" style="margin:0">Dieser Browser kann QR-Codes nicht direkt lesen. Öffne einfach die <b>Kamera-App</b> deines Handys und richte sie auf den QR-Code – der Link öffnet die Packliste und du kannst beitreten.</p>
+      <div class="actions"><button class="btn primary" data-v="">OK</button></div>`);
+    return;
+  }
+  dialog(`<h2>QR-Code scannen</h2>
+    <div class="scanbox"><video id="scanVid" playsinline muted></video><div class="scanframe"></div></div>
+    <p class="hint" id="scanHint" style="margin:8px 0 0">Richte die Kamera auf den Einladungs-QR-Code.</p>
+    <div class="actions"><button class="btn" data-v="">Abbrechen</button></div>`);
+  try{
+    const det = new BarcodeDetector({formats:["qr_code"]});
+    scanStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}, audio:false});
+    const vid = $("#scanVid"); if (!vid){ stopScan(); return; }
+    vid.srcObject = scanStream; await vid.play();
+    const tick = async ()=>{
+      if (!scanStream) return;
+      try{
+        const codes = await det.detect(vid);
+        for (const c of codes){
+          const inv = parseInvite(c.rawValue||"");
+          if (inv){ stopScan(); $("#dlg").close(); setTimeout(()=>openJoin(inv), 0); return; }
+          const h = $("#scanHint"); if (h) h.textContent = "Das ist kein Einladungscode der Packliste.";
+        }
+      }catch(e){}
+      scanTimer = setTimeout(tick, 250);
+    };
+    tick();
+  }catch(e){
+    stopScan();
+    const h = $("#scanHint"); if (h) h.textContent = "Kein Zugriff auf die Kamera. Erlaube die Kamera für diese Seite oder nutze die Kamera-App des Handys.";
+  }
 }
 
 /* Teilen */
@@ -1969,7 +2296,7 @@ function serverDialog(){
 }
 
 /* ---------- Start ---------- */
-load(); render(); syncAll(); checkInviteHash();
+load(); applyDesign(); render(); syncAll(); checkInviteHash();
 if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
